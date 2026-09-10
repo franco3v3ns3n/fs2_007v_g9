@@ -12,7 +12,10 @@
     <header>
         <nav class="navbar navbar-dark py-3" aria-label="Navegación principal">
             <div class="container">
-                <a class="navbar-brand" href="index.html">HuertoHogar</a>
+                <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                    <img src="img/logo-huertohogar.png" class="logo-huertohogar" alt="Logo de HuertoHogar">
+                    HuertoHogar
+                </a>
                 <div class="d-flex flex-wrap gap-3">
                     <a class="text-white" href="index.html" aria-current="page">Inicio</a>
                     <a class="text-white" href="productos.html">Productos</a>
@@ -26,9 +29,62 @@
         </nav>
     </header>
 
-    <main class="container py-5">
-        <h1>Bienvenido a HuertoHogar</h1>
-        <p>Llevamos productos frescos y de calidad desde el campo hasta los hogares de Chile. Acercamos a los consumidores y agricultores locales, promoviendo una alimentación saludable y prácticas sostenibles.</p>
+    <main class="container py-5 home">
+        <section class="py-4 mb-5" aria-labelledby="titulo-home">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="fw-bold mb-2">HuertoHogar · Del campo a tu hogar</p>
+                    <h1 id="titulo-home" class="display-5">Productos frescos para tu hogar</h1>
+                    <p class="lead">Llevamos productos frescos y de calidad desde el campo hasta los hogares de Chile.</p>
+                    <p class="texto-secundario mb-4">Con más de 6 años de experiencia, acercamos a los consumidores y agricultores locales, promoviendo una alimentación saludable y prácticas sostenibles.</p>
+                    <a class="btn btn-primary" href="productos.html">Ver productos</a>
+                </div>
+                <div class="col-md-6 mt-4 mt-md-0">
+                    <img src="img/hero-huertohogar.jpg" class="img-fluid rounded" alt="Productos frescos del campo para el hogar">
+                </div>
+            </div>
+        </section>
+
+        <section aria-labelledby="titulo-destacados">
+            <span class="destacado d-inline-block rounded px-3 py-1 mb-3">Del campo a tu mesa</span>
+            <h2 id="titulo-destacados" class="mb-3">Productos destacados</h2>
+            <p class="texto-secundario mb-4">Conoce una selección de nuestras frutas, verduras y productos orgánicos.</p>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <article class="card h-100">
+                        <img src="img/manzanas-fuji.jpg" class="card-img-top" alt="Manzanas Fuji">
+                        <div class="card-body">
+                            <p class="texto-secundario mb-2">Frutas Frescas</p>
+                            <h3 class="card-title h4">Manzanas Fuji</h3>
+                            <p class="card-text">Manzanas crujientes y dulces del Valle del Maule, de textura firme y sabor equilibrado entre dulce y ácido.</p>
+                            <p class="fw-bold mb-0">$1.200 por kilo</p>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-md-4">
+                    <article class="card h-100">
+                        <img src="img/zanahorias-organicas.jpg" class="card-img-top" alt="Zanahorias orgánicas">
+                        <div class="card-body">
+                            <p class="texto-secundario mb-2">Verduras Orgánicas</p>
+                            <h3 class="card-title h4">Zanahorias Orgánicas</h3>
+                            <p class="card-text">Zanahorias de la Región de O'Higgins, cultivadas sin pesticidas y fuente de vitamina A y fibra.</p>
+                            <p class="fw-bold mb-0">$900 por kilo</p>
+                        </div>
+                    </article>
+                </div>
+                <div class="col-md-4">
+                    <article class="card h-100">
+                        <img src="img/miel-organica.jpg" class="card-img-top" alt="Miel orgánica">
+                        <div class="card-body">
+                            <p class="texto-secundario mb-2">Productos Orgánicos</p>
+                            <h3 class="card-title h4">Miel Orgánica</h3>
+                            <p class="card-text">Miel pura y orgánica producida por apicultores locales.</p>
+                            <p class="fw-bold mb-0">$5.000 por frasco de 500 g</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="mt-auto py-4">

@@ -21,6 +21,16 @@ h1 {
     font-weight: 700;
 }
 
+.logo-huertohogar {
+    width: 48px;
+    height: auto;
+}
+
+.home .card-img-top {
+    height: 220px;
+    object-fit: cover;
+}
+
 .navbar a[aria-current="page"] {
     font-weight: 700;
 }
@@ -31,4 +41,29 @@ footer {
 
 footer a {
     color: #2E8B57;
+}
+
+.home h1, .home h2, .home h3 {
+    color: #8B4513;
+}
+
+.home .texto-secundario {
+    color: #666666;
+}
+
+.home .destacado {
+    background-color: #FFD700;
+    color: #333333;
+}
+
+.home .btn-primary {
+    background-color: #2E8B57;
+    border-color: #2E8B57;
+}
+
+.home .btn-primary:hover,
+.home .btn-primary:focus-visible,
+.home .btn-primary:active {
+    background-color: #333333;
+    border-color: #333333;
 }
