@@ -26,7 +26,8 @@ h1 {
     height: auto;
 }
 
-.home .card-img-top {
+.home .card-img-top,
+.catalogo .card-img-top {
     height: 220px;
     object-fit: cover;
 }
@@ -43,11 +44,13 @@ footer a {
     color: #2E8B57;
 }
 
-.home h1, .home h2, .home h3 {
+.home h1, .home h2, .home h3,
+.catalogo h1, .catalogo h2 {
     color: #8B4513;
 }
 
-.home .texto-secundario {
+.home .texto-secundario,
+.catalogo .texto-secundario {
     color: #666666;
 }
 
@@ -56,14 +59,24 @@ footer a {
     color: #333333;
 }
 
-.home .btn-primary {
+.home .btn-primary,
+.catalogo .btn-primary {
     background-color: #2E8B57;
     border-color: #2E8B57;
 }
 
 .home .btn-primary:hover,
 .home .btn-primary:focus-visible,
-.home .btn-primary:active {
+.home .btn-primary:active,
+.catalogo .btn-primary:hover,
+.catalogo .btn-primary:focus-visible,
+.catalogo .btn-primary:active {
     background-color: #333333;
     border-color: #333333;
+}
+
+.imagen-detalle {
+    width: 100%;
+    max-height: 450px;
+    object-fit: contain;
 }

@@ -12,7 +12,10 @@
     <header>
         <nav class="navbar navbar-dark py-3" aria-label="Navegación principal">
             <div class="container">
-                <a class="navbar-brand" href="index.html">HuertoHogar</a>
+                <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                    <img src="img/logo-huertohogar.png" class="logo-huertohogar" alt="Logo de HuertoHogar">
+                    HuertoHogar
+                </a>
                 <div class="d-flex flex-wrap gap-3">
                     <a class="text-white" href="index.html">Inicio</a>
                     <a class="text-white" href="productos.html" aria-current="page">Productos</a>
@@ -26,9 +29,10 @@
         </nav>
     </header>
 
-    <main class="container py-5">
+    <main class="container py-5 catalogo">
         <h1>Productos</h1>
-        <p>Aquí podrás conocer los productos de HuertoHogar.</p>
+        <p class="texto-secundario mb-4">Conoce nuestras frutas, verduras y productos orgánicos, y consulta sus detalles.</p>
+        <div id="listaProductos" class="row g-4"></div>
     </main>
 
     <footer class="mt-auto py-4">
