@@ -73,6 +73,120 @@ const productos = [
     }
 ];
 
+
+let carrito = [];
+
+const carritoGuardado = localStorage.getItem("carrito");
+
+if (carritoGuardado) {
+    carrito = JSON.parse(carritoGuardado);
+}
+
+function guardarCarrito() {
+    localStorage.setItem("carrito", JSON.stringify(carrito));
+}
+
+function agregarAlCarrito(codigo) {
+    const producto = productos.find(function(producto) {
+        return producto.codigo === codigo;
+    });
+    if (!producto) {
+        return;
+    }
+    const item = carrito.find(function(item) {
+        return item.codigo === codigo;
+    });
+    if (item) {
+        item.cantidad += 1;
+    } else {
+        carrito.push({ codigo: codigo, cantidad: 1 });
+    }
+    guardarCarrito();
+    actualizarContadorCarrito();
+    mostrarCarrito();
+}
+
+function cambiarCantidad(codigo, cambio) {
+    const item = carrito.find(function(item) {
+        return item.codigo === codigo;
+    });
+    if (!item || (cambio !== 1 && cambio !== -1)) {
+        return;
+    }
+    if (item.cantidad + cambio >= 1) {
+        item.cantidad += cambio;
+    }
+    guardarCarrito();
+    mostrarCarrito();
+    actualizarContadorCarrito();
+}
+
+function eliminarDelCarrito(codigo) {
+    carrito = carrito.filter(function(item) {
+        return item.codigo !== codigo;
+    });
+    guardarCarrito();
+    mostrarCarrito();
+    actualizarContadorCarrito();
+}
+
+function actualizarContadorCarrito() {
+    const contador = document.getElementById("contadorCarrito");
+    if (!contador) {
+        return;
+    }
+    let cantidadTotal = 0;
+    carrito.forEach(function(item) {
+        cantidadTotal += item.cantidad;
+    });
+    contador.textContent = cantidadTotal;
+}
+
+function mostrarCarrito() {
+    const lista = document.getElementById("listaCarrito");
+    if (!lista) {
+        return;
+    }
+    const resumen = document.getElementById("resumenCarrito");
+    if (!resumen) {
+        return;
+    }
+    if (carrito.length === 0) {
+        lista.innerHTML = `
+            <p>Tu carrito está vacío.</p>
+            <a href="productos.html" class="btn btn-primary">Ver productos</a>
+        `;
+        resumen.textContent = "";
+        return;
+    }
+    let contenido = "";
+    let total = 0;
+    carrito.forEach(function(item) {
+        const producto = productos.find(function(producto) {
+            return producto.codigo === item.codigo;
+        });
+        const subtotal = producto.precio * item.cantidad;
+        total += subtotal;
+        contenido += `
+            <article class="card mb-3">
+                <div class="card-body">
+                    <h2 class="h4">${producto.nombre}</h2>
+                    <p>Precio unitario: $${producto.precio.toLocaleString("es-CL")} por ${producto.unidad}</p>
+                    <p>Cantidad: ${item.cantidad}</p>
+                    <p class="fw-bold">Subtotal: $${subtotal.toLocaleString("es-CL")}</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-primary" onclick="cambiarCantidad('${item.codigo}', -1)">-</button>
+                        <button type="button" class="btn btn-primary" onclick="cambiarCantidad('${item.codigo}', 1)">+</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="eliminarDelCarrito('${item.codigo}')">Eliminar</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    });
+    lista.innerHTML = contenido;
+    resumen.textContent = "Total: $" + total.toLocaleString("es-CL");
+}
+
 function mostrarProductos() {
     const contenedor = document.getElementById("listaProductos");
     if (!contenedor) {
@@ -94,7 +208,10 @@ function mostrarProductos() {
                         <p class="texto-secundario mb-2">${producto.categoria}</p>
                         <h2 class="card-title h4">${producto.nombre}</h2>
                         <p class="fw-bold">$${producto.precio.toLocaleString("es-CL")} por ${producto.unidad}</p>
-                        <a href="detalle-producto.html?codigo=${producto.codigo}" class="btn btn-primary">Ver detalle</a>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="detalle-producto.html?codigo=${producto.codigo}" class="btn btn-primary">Ver detalle</a>
+                            <button type="button" class="btn btn-primary" onclick="agregarAlCarrito('${producto.codigo}')">Añadir al carrito</button>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -148,6 +265,7 @@ function mostrarDetalleProducto() {
                 <p class="fw-bold">$${productoEncontrado.precio.toLocaleString("es-CL")} por ${productoEncontrado.unidad}</p>
                 <p>Stock disponible: ${productoEncontrado.stock} ${unidadStock}.</p>
                 <p>${productoEncontrado.descripcion}</p>
+                <button type="button" class="btn btn-primary" onclick="agregarAlCarrito('${productoEncontrado.codigo}')">Añadir al carrito</button>
             </div>
         </div>
     `;
@@ -155,3 +273,5 @@ function mostrarDetalleProducto() {
 
 mostrarProductos();
 mostrarDetalleProducto();
+mostrarCarrito();
+actualizarContadorCarrito();
