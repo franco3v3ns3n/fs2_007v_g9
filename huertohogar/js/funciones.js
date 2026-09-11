@@ -19,7 +19,7 @@ const productos = [
         unidad: "kilo",
         stock: 200,
         descripcion: "Naranjas jugosas, ricas en vitamina C e indicadas para preparar zumos frescos.",
-        imagen: "img/hero-huertohogar.jpg"
+        imagen: "img/naranjas-valencia.jpg"
     },
     {
         codigo: "FR003",
@@ -29,7 +29,7 @@ const productos = [
         unidad: "kilo",
         stock: 250,
         descripcion: "Plátanos maduros y dulces, ricos en potasio y vitaminas.",
-        imagen: "img/hero-huertohogar.jpg"
+        imagen: "img/platanos-cavendish.jpg"
     },
     {
         codigo: "VR001",
@@ -49,7 +49,7 @@ const productos = [
         unidad: "bolsa de 500 g",
         stock: 80,
         descripcion: "Espinacas frescas y nutritivas, cultivadas bajo prácticas orgánicas.",
-        imagen: "img/hero-huertohogar.jpg"
+        imagen: "img/espinacas-frescas.jpg"
     },
     {
         codigo: "VR003",
@@ -59,7 +59,7 @@ const productos = [
         unidad: "kilo",
         stock: 120,
         descripcion: "Pimientos rojos, amarillos y verdes, ricos en antioxidantes y vitaminas.",
-        imagen: "img/hero-huertohogar.jpg"
+        imagen: "img/pimientos-tricolores.jpg"
     },
     {
         codigo: "PO001",
