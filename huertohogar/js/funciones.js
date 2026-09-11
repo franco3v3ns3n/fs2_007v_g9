@@ -356,9 +356,142 @@ function validarContacto() {
     });
 }
 
+function validarRun(run) {
+    if (run.length < 7 || run.length > 9) {
+        return false;
+    }
+    if (run.includes(".") || run.includes("-")) {
+        return false;
+    }
+
+    const cuerpo = run.slice(0, -1);
+    const digitoIngresado = run.slice(-1).toUpperCase();
+    let suma = 0;
+    let multiplicador = 2;
+
+    // Recorrer el cuerpo de derecha a izquierda, con factores del 2 al 7.
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+        if (cuerpo[i] < "0" || cuerpo[i] > "9") {
+            return false;
+        }
+        suma += Number(cuerpo[i]) * multiplicador;
+        multiplicador += 1;
+        if (multiplicador > 7) {
+            multiplicador = 2;
+        }
+    }
+
+    const resultado = 11 - (suma % 11);
+    let digitoCalculado = String(resultado);
+    if (resultado === 11) {
+        digitoCalculado = "0";
+    } else if (resultado === 10) {
+        digitoCalculado = "K";
+    }
+    return digitoCalculado === digitoIngresado;
+}
+
+function validarRegistro() {
+    const form = document.getElementById("formRegistro");
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const run = document.getElementById("runRegistro").value.trim();
+        const nombre = document.getElementById("nombreRegistro").value.trim();
+        const apellidos = document.getElementById("apellidosRegistro").value.trim();
+        const correo = document.getElementById("correoRegistro").value.trim();
+        const direccion = document.getElementById("direccionRegistro").value.trim();
+        const mensaje = document.getElementById("mensajeRegistro");
+
+        if (run === "") {
+            mensaje.textContent = "Ingrese su RUN.";
+            return;
+        }
+        if (!validarRun(run)) {
+            mensaje.textContent = "El RUN ingresado no es válido.";
+            return;
+        }
+        if (nombre === "") {
+            mensaje.textContent = "Ingrese su nombre.";
+            return;
+        }
+        if (nombre.length > 50) {
+            mensaje.textContent = "El nombre no puede superar los 50 caracteres.";
+            return;
+        }
+        if (apellidos === "") {
+            mensaje.textContent = "Ingrese sus apellidos.";
+            return;
+        }
+        if (apellidos.length > 100) {
+            mensaje.textContent = "Los apellidos no pueden superar los 100 caracteres.";
+            return;
+        }
+        if (correo === "") {
+            mensaje.textContent = "Ingrese su correo.";
+            return;
+        }
+        if (correo.length > 100) {
+            mensaje.textContent = "El correo no puede superar los 100 caracteres.";
+            return;
+        }
+        if (!dominioPermitido(correo)) {
+            mensaje.textContent = "El correo no pertenece a un dominio permitido.";
+            return;
+        }
+        if (direccion === "") {
+            mensaje.textContent = "Ingrese su dirección.";
+            return;
+        }
+        if (direccion.length > 300) {
+            mensaje.textContent = "La dirección no puede superar los 300 caracteres.";
+            return;
+        }
+        mensaje.textContent = "Registro válido.";
+    });
+}
+
+function cargarRegiones() {
+    const regionSelect = document.getElementById("regionRegistro");
+    if (!regionSelect) {
+        return;
+    }
+
+    regionSelect.innerHTML = '<option value="">Seleccione una región</option>';
+    for (const region of regiones) {
+        regionSelect.innerHTML += `<option value="${region.nombre}">${region.nombre}</option>`;
+    }
+
+    regionSelect.addEventListener("change", cargarComunas);
+}
+
+function cargarComunas() {
+    const regionSelect = document.getElementById("regionRegistro");
+    const comunaSelect = document.getElementById("comunaRegistro");
+    if (!regionSelect || !comunaSelect) {
+        return;
+    }
+
+    comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+    const regionSeleccionada = regiones.find(function(region) {
+        return region.nombre === regionSelect.value;
+    });
+    if (!regionSeleccionada) {
+        return;
+    }
+    for (const comuna of regionSeleccionada.comunas) {
+        comunaSelect.innerHTML += `<option value="${comuna}">${comuna}</option>`;
+    }
+}
+
 mostrarProductos();
 mostrarDetalleProducto();
 mostrarCarrito();
 actualizarContadorCarrito();
 validarLogin();
 validarContacto();
+validarRegistro();
+cargarRegiones();
