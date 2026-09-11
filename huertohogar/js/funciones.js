@@ -271,7 +271,94 @@ function mostrarDetalleProducto() {
     `;
 }
 
+function dominioPermitido(correo) {
+    return correo.endsWith("@duoc.cl") ||
+        correo.endsWith("@profesor.duoc.cl") ||
+        correo.endsWith("@gmail.com");
+}
+
+function validarLogin() {
+    const form = document.getElementById("formLogin");
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const correo = document.getElementById("correoLogin").value.trim();
+        const contrasena = document.getElementById("contrasenaLogin").value;
+        const mensaje = document.getElementById("mensajeLogin");
+
+        if (correo === "") {
+            mensaje.textContent = "Ingrese su correo.";
+            return;
+        }
+        if (correo.length > 100) {
+            mensaje.textContent = "El correo no puede superar los 100 caracteres.";
+            return;
+        }
+        if (!dominioPermitido(correo)) {
+            mensaje.textContent = "El correo no pertenece a un dominio permitido.";
+            return;
+        }
+        if (contrasena.trim() === "") {
+            mensaje.textContent = "Ingrese su contraseña.";
+            return;
+        }
+        if (contrasena.length < 4 || contrasena.length > 10) {
+            mensaje.textContent = "La contraseña debe tener entre 4 y 10 caracteres.";
+            return;
+        }
+        mensaje.textContent = "Datos correctos.";
+    });
+}
+
+function validarContacto() {
+    const form = document.getElementById("formContacto");
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        const nombre = document.getElementById("nombreContacto").value.trim();
+        const correo = document.getElementById("correoContacto").value.trim();
+        const comentario = document.getElementById("comentarioContacto").value.trim();
+        const mensaje = document.getElementById("mensajeContacto");
+
+        if (nombre === "") {
+            mensaje.textContent = "Ingrese su nombre.";
+            return;
+        }
+        if (nombre.length > 100) {
+            mensaje.textContent = "El nombre no puede superar los 100 caracteres.";
+            return;
+        }
+        if (correo !== "") {
+            if (correo.length > 100) {
+                mensaje.textContent = "El correo no puede superar los 100 caracteres.";
+                return;
+            }
+            if (!dominioPermitido(correo)) {
+                mensaje.textContent = "El correo no pertenece a un dominio permitido.";
+                return;
+            }
+        }
+        if (comentario === "") {
+            mensaje.textContent = "Ingrese su comentario.";
+            return;
+        }
+        if (comentario.length > 500) {
+            mensaje.textContent = "El comentario no puede superar los 500 caracteres.";
+            return;
+        }
+        mensaje.textContent = "Mensaje enviado correctamente.";
+    });
+}
+
 mostrarProductos();
 mostrarDetalleProducto();
 mostrarCarrito();
 actualizarContadorCarrito();
+validarLogin();
+validarContacto();
