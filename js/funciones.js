@@ -3,7 +3,13 @@ function passwordValida(password) {
 }
 
 function telefonoValido(telefono) {
-  return telefono.length === 9 && !isNaN(telefono);
+  if (telefono.length !== 9) return false;
+
+  for (const digito of telefono) {
+    if (!"0123456789".includes(digito)) return false;
+  }
+
+  return true;
 }
 
 const formContacto = document.getElementById("formContacto");
