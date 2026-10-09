@@ -17,7 +17,42 @@
   </header>
 
   <main>
-    <h1>Editar usuario</h1>
+    <section>
+      <h1>Editar usuario</h1>
+      <p>Revisa los datos del usuario representativo del prototipo administrativo.</p>
+
+      <form id="formEditarUsuario" action="#" method="post">
+        <p>
+          <label for="nombreEditarUsuario">Nombre:</label><br>
+          <input type="text" id="nombreEditarUsuario" name="nombreEditarUsuario" value="Ana" required>
+        </p>
+
+        <p>
+          <label for="apellidoEditarUsuario">Apellido:</label><br>
+          <input type="text" id="apellidoEditarUsuario" name="apellidoEditarUsuario" value="Torres" required>
+        </p>
+
+        <p>
+          <label for="correoEditarUsuario">Correo electrónico:</label><br>
+          <input type="email" id="correoEditarUsuario" name="correoEditarUsuario" value="ana.torres@example.com" required>
+        </p>
+
+        <p>
+          <label for="telefonoEditarUsuario">Teléfono:</label><br>
+          <span>+56</span>
+          <input type="tel" id="telefonoEditarUsuario" name="telefonoEditarUsuario" value="912345678" required>
+        </p>
+
+        <p>
+          <label for="direccionEditarUsuario">Dirección:</label><br>
+          <input type="text" id="direccionEditarUsuario" name="direccionEditarUsuario" value="Dirección simulada 123, Santiago" required>
+        </p>
+
+        <button type="submit">Guardar cambios</button>
+      </form>
+
+      <p><a href="usuarios.html">Volver a Usuarios</a></p>
+    </section>
   </main>
 
   <footer>

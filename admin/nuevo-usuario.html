@@ -17,7 +17,47 @@
   </header>
 
   <main>
-    <h1>Nuevo usuario</h1>
+    <section>
+      <h1>Nuevo usuario</h1>
+      <p>Completa los datos para representar un nuevo usuario en el prototipo administrativo.</p>
+
+      <form id="formNuevoUsuario" action="#" method="post">
+        <p>
+          <label for="nombreNuevoUsuario">Nombre:</label><br>
+          <input type="text" id="nombreNuevoUsuario" name="nombreNuevoUsuario" required>
+        </p>
+
+        <p>
+          <label for="apellidoNuevoUsuario">Apellido:</label><br>
+          <input type="text" id="apellidoNuevoUsuario" name="apellidoNuevoUsuario" required>
+        </p>
+
+        <p>
+          <label for="correoNuevoUsuario">Correo electrónico:</label><br>
+          <input type="email" id="correoNuevoUsuario" name="correoNuevoUsuario" required>
+        </p>
+
+        <p>
+          <label for="telefonoNuevoUsuario">Teléfono:</label><br>
+          <span>+56</span>
+          <input type="tel" id="telefonoNuevoUsuario" name="telefonoNuevoUsuario" required>
+        </p>
+
+        <p>
+          <label for="direccionNuevoUsuario">Dirección:</label><br>
+          <input type="text" id="direccionNuevoUsuario" name="direccionNuevoUsuario" required>
+        </p>
+
+        <p>
+          <label for="passwordNuevoUsuario">Contraseña:</label><br>
+          <input type="password" id="passwordNuevoUsuario" name="passwordNuevoUsuario" required>
+        </p>
+
+        <button type="submit">Guardar usuario</button>
+      </form>
+
+      <p><a href="usuarios.html">Volver a Usuarios</a></p>
+    </section>
   </main>
 
   <footer>
