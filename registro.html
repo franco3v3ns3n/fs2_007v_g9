@@ -20,7 +20,44 @@
   </header>
 
   <main>
-    <h1>Registro</h1>
+    <section>
+      <h1>Registro</h1>
+      <p>Completa tus datos para crear tu cuenta en HuertoHogar.</p>
+
+      <form id="formRegistro" action="#" method="post">
+        <p>
+          <label for="nombreRegistro">Nombre:</label><br>
+          <input type="text" id="nombreRegistro" name="nombreRegistro" required>
+        </p>
+
+        <p>
+          <label for="apellidoRegistro">Apellido:</label><br>
+          <input type="text" id="apellidoRegistro" name="apellidoRegistro" required>
+        </p>
+
+        <p>
+          <label for="correoRegistro">Correo electrónico:</label><br>
+          <input type="email" id="correoRegistro" name="correoRegistro" required>
+        </p>
+
+        <p>
+          <label for="telefonoRegistro">Teléfono:</label><br>
+          <input type="tel" id="telefonoRegistro" name="telefonoRegistro" required>
+        </p>
+
+        <p>
+          <label for="passwordRegistro">Contraseña:</label><br>
+          <input type="password" id="passwordRegistro" name="passwordRegistro" required>
+        </p>
+
+        <p>
+          <label for="confirmarPasswordRegistro">Confirmar contraseña:</label><br>
+          <input type="password" id="confirmarPasswordRegistro" name="confirmarPasswordRegistro" required>
+        </p>
+
+        <button type="submit">Registrarse</button>
+      </form>
+    </section>
   </main>
 
   <footer>
