@@ -21,15 +21,17 @@
       <h1>Nuevo producto</h1>
       <p>Completa los datos para representar un nuevo producto en el prototipo administrativo.</p>
 
-      <form id="formNuevoProducto" action="#" method="post">
+      <form id="formNuevoProducto" action="#" method="post" novalidate>
         <p>
           <label for="codigoNuevoProducto">Código:</label><br>
           <input type="text" id="codigoNuevoProducto" name="codigoNuevoProducto" required>
+          <small id="errorCodigoNuevoProducto"></small>
         </p>
 
         <p>
           <label for="nombreNuevoProducto">Nombre:</label><br>
           <input type="text" id="nombreNuevoProducto" name="nombreNuevoProducto" required>
+          <small id="errorNombreNuevoProducto"></small>
         </p>
 
         <p>
@@ -41,24 +43,29 @@
             <option value="Productos Orgánicos">Productos Orgánicos</option>
             <option value="Productos Lácteos">Productos Lácteos</option>
           </select>
+          <small id="errorCategoriaNuevoProducto"></small>
         </p>
 
         <p>
           <label for="precioNuevoProducto">Precio:</label><br>
           <input type="number" id="precioNuevoProducto" name="precioNuevoProducto" required>
+          <small id="errorPrecioNuevoProducto"></small>
         </p>
 
         <p>
           <label for="stockNuevoProducto">Stock:</label><br>
           <input type="number" id="stockNuevoProducto" name="stockNuevoProducto" required>
+          <small id="errorStockNuevoProducto"></small>
         </p>
 
         <p>
           <label for="descripcionNuevoProducto">Descripción:</label><br>
           <textarea id="descripcionNuevoProducto" name="descripcionNuevoProducto" required></textarea>
+          <small id="errorDescripcionNuevoProducto"></small>
         </p>
 
         <button type="submit">Guardar producto</button>
+        <p id="mensajeNuevoProducto"></p>
       </form>
 
       <p><a href="productos.html">Volver a Productos</a></p>
@@ -68,5 +75,6 @@
   <footer>
     <p>HuertoHogar</p>
   </footer>
+  <script src="../js/funciones.js"></script>
 </body>
 </html>

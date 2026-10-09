@@ -21,39 +21,46 @@
       <h1>Nuevo usuario</h1>
       <p>Completa los datos para representar un nuevo usuario en el prototipo administrativo.</p>
 
-      <form id="formNuevoUsuario" action="#" method="post">
+      <form id="formNuevoUsuario" action="#" method="post" novalidate>
         <p>
           <label for="nombreNuevoUsuario">Nombre:</label><br>
           <input type="text" id="nombreNuevoUsuario" name="nombreNuevoUsuario" required>
+          <small id="errorNombreNuevoUsuario"></small>
         </p>
 
         <p>
           <label for="apellidoNuevoUsuario">Apellido:</label><br>
           <input type="text" id="apellidoNuevoUsuario" name="apellidoNuevoUsuario" required>
+          <small id="errorApellidoNuevoUsuario"></small>
         </p>
 
         <p>
           <label for="correoNuevoUsuario">Correo electrónico:</label><br>
           <input type="email" id="correoNuevoUsuario" name="correoNuevoUsuario" required>
+          <small id="errorCorreoNuevoUsuario"></small>
         </p>
 
         <p>
           <label for="telefonoNuevoUsuario">Teléfono:</label><br>
           <span>+56</span>
           <input type="tel" id="telefonoNuevoUsuario" name="telefonoNuevoUsuario" required>
+          <small id="errorTelefonoNuevoUsuario"></small>
         </p>
 
         <p>
           <label for="direccionNuevoUsuario">Dirección:</label><br>
           <input type="text" id="direccionNuevoUsuario" name="direccionNuevoUsuario" required>
+          <small id="errorDireccionNuevoUsuario"></small>
         </p>
 
         <p>
           <label for="passwordNuevoUsuario">Contraseña:</label><br>
           <input type="password" id="passwordNuevoUsuario" name="passwordNuevoUsuario" required>
+          <small id="errorPasswordNuevoUsuario"></small>
         </p>
 
         <button type="submit">Guardar usuario</button>
+        <p id="mensajeNuevoUsuario"></p>
       </form>
 
       <p><a href="usuarios.html">Volver a Usuarios</a></p>
@@ -63,5 +70,6 @@
   <footer>
     <p>HuertoHogar</p>
   </footer>
+  <script src="../js/funciones.js"></script>
 </body>
 </html>
