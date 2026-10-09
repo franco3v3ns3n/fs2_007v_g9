@@ -24,18 +24,21 @@
       <h1>Inicio de sesión</h1>
       <p>Ingresa tu correo electrónico y contraseña para acceder a HuertoHogar.</p>
 
-      <form id="formLogin" action="#" method="post">
+      <form id="formLogin" action="#" method="post" novalidate>
         <p>
           <label for="correoLogin">Correo electrónico:</label><br>
           <input type="email" id="correoLogin" name="correoLogin" required>
+          <small id="errorCorreoLogin"></small>
         </p>
 
         <p>
           <label for="passwordLogin">Contraseña:</label><br>
           <input type="password" id="passwordLogin" name="passwordLogin" required>
+          <small id="errorPasswordLogin"></small>
         </p>
 
         <button type="submit">Iniciar sesión</button>
+        <p id="mensajeLogin"></p>
       </form>
     </section>
   </main>
@@ -43,5 +46,6 @@
   <footer>
     <p>HuertoHogar</p>
   </footer>
+  <script src="js/funciones.js"></script>
 </body>
 </html>

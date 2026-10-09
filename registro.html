@@ -24,38 +24,46 @@
       <h1>Registro</h1>
       <p>Completa tus datos para crear tu cuenta en HuertoHogar.</p>
 
-      <form id="formRegistro" action="#" method="post">
+      <form id="formRegistro" action="#" method="post" novalidate>
         <p>
           <label for="nombreRegistro">Nombre:</label><br>
           <input type="text" id="nombreRegistro" name="nombreRegistro" required>
+          <small id="errorNombreRegistro"></small>
         </p>
 
         <p>
           <label for="apellidoRegistro">Apellido:</label><br>
           <input type="text" id="apellidoRegistro" name="apellidoRegistro" required>
+          <small id="errorApellidoRegistro"></small>
         </p>
 
         <p>
           <label for="correoRegistro">Correo electrónico:</label><br>
           <input type="email" id="correoRegistro" name="correoRegistro" required>
+          <small id="errorCorreoRegistro"></small>
         </p>
 
         <p>
           <label for="telefonoRegistro">Teléfono:</label><br>
+          <span>+56</span>
           <input type="tel" id="telefonoRegistro" name="telefonoRegistro" required>
+          <small id="errorTelefonoRegistro"></small>
         </p>
 
         <p>
           <label for="passwordRegistro">Contraseña:</label><br>
           <input type="password" id="passwordRegistro" name="passwordRegistro" required>
+          <small id="errorPasswordRegistro"></small>
         </p>
 
         <p>
           <label for="confirmarPasswordRegistro">Confirmar contraseña:</label><br>
           <input type="password" id="confirmarPasswordRegistro" name="confirmarPasswordRegistro" required>
+          <small id="errorConfirmarPasswordRegistro"></small>
         </p>
 
         <button type="submit">Registrarse</button>
+        <p id="mensajeRegistro"></p>
       </form>
     </section>
   </main>
@@ -63,5 +71,6 @@
   <footer>
     <p>HuertoHogar</p>
   </footer>
+  <script src="js/funciones.js"></script>
 </body>
 </html>

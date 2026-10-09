@@ -27,23 +27,27 @@
         siguiente formulario para comunicarte con nosotros.
       </p>
 
-      <form id="formContacto" action="#" method="post">
+      <form id="formContacto" action="#" method="post" novalidate>
         <p>
           <label for="nombreContacto">Nombre:</label><br>
           <input type="text" id="nombreContacto" name="nombreContacto" required>
+          <small id="errorNombreContacto"></small>
         </p>
 
         <p>
           <label for="correoContacto">Correo electrónico:</label><br>
           <input type="email" id="correoContacto" name="correoContacto" required>
+          <small id="errorCorreoContacto"></small>
         </p>
 
         <p>
           <label for="comentarioContacto">Comentario:</label><br>
           <textarea id="comentarioContacto" name="comentarioContacto" rows="6" required></textarea>
+          <small id="errorComentarioContacto"></small>
         </p>
 
         <button type="submit">Enviar</button>
+        <p id="mensajeContacto"></p>
       </form>
     </section>
   </main>
@@ -51,5 +55,6 @@
   <footer>
     <p>HuertoHogar</p>
   </footer>
+  <script src="js/funciones.js"></script>
 </body>
 </html>
