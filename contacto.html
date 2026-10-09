@@ -20,7 +20,32 @@
   </header>
 
   <main>
-    <h1>Contacto</h1>
+    <section>
+      <h1>Contacto</h1>
+      <p>
+        Si tienes una consulta sobre HuertoHogar o nuestros productos, completa el
+        siguiente formulario para comunicarte con nosotros.
+      </p>
+
+      <form id="formContacto" action="#" method="post">
+        <p>
+          <label for="nombreContacto">Nombre:</label><br>
+          <input type="text" id="nombreContacto" name="nombreContacto" required>
+        </p>
+
+        <p>
+          <label for="correoContacto">Correo electrónico:</label><br>
+          <input type="email" id="correoContacto" name="correoContacto" required>
+        </p>
+
+        <p>
+          <label for="comentarioContacto">Comentario:</label><br>
+          <textarea id="comentarioContacto" name="comentarioContacto" rows="6" required></textarea>
+        </p>
+
+        <button type="submit">Enviar</button>
+      </form>
+    </section>
   </main>
 
   <footer>
