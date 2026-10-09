@@ -1,57 +1,74 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detalle de producto | HuertoHogar</title>
-</head>
-<body>
-  <header>
-    <p>HuertoHogar</p>
-    <nav>
-      <a href="index.html">Inicio</a>
-      <a href="productos.html">Productos</a>
-      <a href="nosotros.html">Nosotros</a>
-      <a href="blog.html">Blog</a>
-      <a href="contacto.html">Contacto</a>
-      <a href="login.html">Iniciar sesión</a>
-      <a href="registro.html">Registro</a>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de producto | HuertoHogar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body class="d-flex flex-column min-vh-100">
+    <header>
+      <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom" aria-label="Navegación principal">
+        <div class="container">
+          <span class="navbar-brand mb-0">HuertoHogar</span>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal" aria-controls="menuPrincipal" aria-expanded="false" aria-label="Mostrar u ocultar menú">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="menuPrincipal">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+              <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+              <li class="nav-item"><a class="nav-link" href="productos.html">Productos</a></li>
+              <li class="nav-item"><a class="nav-link" href="nosotros.html">Nosotros</a></li>
+              <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
+              <li class="nav-item"><a class="nav-link" href="contacto.html">Contacto</a></li>
+              <li class="nav-item"><a class="nav-link" href="login.html">Iniciar sesión</a></li>
+              <li class="nav-item"><a class="nav-link" href="registro.html">Registro</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
 
-  <main>
-    <article>
-      <h1>Manzanas Fuji</h1>
-      <p><strong>Código:</strong> FR001</p>
-      <p><strong>Categoría:</strong> Frutas Frescas</p>
+    <main class="container py-4 py-lg-5 flex-grow-1">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-9 col-xl-8">
+          <article class="bg-body p-4 p-md-5 border rounded-3">
+            <h1 class="mb-4">Manzanas Fuji</h1>
+            <p><strong>Código:</strong> FR001</p>
+            <p><strong>Categoría:</strong> Frutas Frescas</p>
 
-      <section>
-        <h2>Precio y disponibilidad</h2>
-        <p><strong>Precio:</strong> $1,200 CLP por kilo</p>
-        <p><strong>Stock:</strong> 150 kilos</p>
-      </section>
+            <section class="mb-4">
+              <h2 class="h4">Precio y disponibilidad</h2>
+              <p><strong>Precio:</strong> $1,200 CLP por kilo</p>
+              <p><strong>Stock:</strong> 150 kilos</p>
+            </section>
 
-      <section>
-        <h2>Descripción</h2>
-        <p>
-          Manzanas Fuji crujientes y dulces, cultivadas en el Valle del Maule.
-          Perfectas para meriendas saludables o como ingrediente en postres. Estas
-          manzanas son conocidas por su textura firme y su sabor equilibrado entre
-          dulce y ácido.
-        </p>
-      </section>
+            <section class="mb-4">
+              <h2 class="h4">Descripción</h2>
+              <p>
+                Manzanas Fuji crujientes y dulces, cultivadas en el Valle del Maule.
+                Perfectas para meriendas saludables o como ingrediente en postres. Estas
+                manzanas son conocidas por su textura firme y su sabor equilibrado entre
+                dulce y ácido.
+              </p>
+            </section>
 
-      <section>
-        <h2>Origen</h2>
-        <p>Valle del Maule</p>
-      </section>
+            <section class="mb-4">
+              <h2 class="h4">Origen</h2>
+              <p>Valle del Maule</p>
+            </section>
 
-      <a href="productos.html">Volver al catálogo</a>
-    </article>
-  </main>
+            <a href="productos.html" class="btn btn-outline-primary">Volver al catálogo</a>
+          </article>
+        </div>
+      </div>
+    </main>
 
-  <footer>
-    <p>HuertoHogar</p>
-  </footer>
-</body>
+    <footer class="border-top bg-body-tertiary py-3">
+      <div class="container">
+        <p class="mb-0 text-body-secondary">HuertoHogar</p>
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>
