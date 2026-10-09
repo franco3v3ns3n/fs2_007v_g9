@@ -20,7 +20,24 @@
   </header>
 
   <main>
-    <h1>Inicio de sesión</h1>
+    <section>
+      <h1>Inicio de sesión</h1>
+      <p>Ingresa tu correo electrónico y contraseña para acceder a HuertoHogar.</p>
+
+      <form id="formLogin" action="#" method="post">
+        <p>
+          <label for="correoLogin">Correo electrónico:</label><br>
+          <input type="email" id="correoLogin" name="correoLogin" required>
+        </p>
+
+        <p>
+          <label for="passwordLogin">Contraseña:</label><br>
+          <input type="password" id="passwordLogin" name="passwordLogin" required>
+        </p>
+
+        <button type="submit">Iniciar sesión</button>
+      </form>
+    </section>
   </main>
 
   <footer>
