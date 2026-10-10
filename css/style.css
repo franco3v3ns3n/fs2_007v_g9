@@ -360,10 +360,44 @@ form .text-success {
 }
 
 /* Pie de página */
-footer {
+.site-footer {
   --bs-tertiary-bg-rgb: 234, 241, 231;
-  --bs-secondary-color: var(--hh-green-dark);
+  --bs-border-color: var(--hh-border);
+  color: #666666;
   font-size: 0.9rem;
+}
+
+.footer-brand {
+  color: var(--hh-green-dark);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.footer-description {
+  max-width: 34rem;
+}
+
+.footer-nav {
+  row-gap: 0.5rem;
+}
+
+.footer-nav a,
+.footer-store-link {
+  color: var(--hh-green-dark);
+  font-weight: 600;
+}
+
+.footer-nav a:hover,
+.footer-nav a:focus-visible,
+.footer-store-link:hover,
+.footer-store-link:focus-visible {
+  color: var(--hh-green-hover);
+}
+
+.footer-bottom {
+  color: #666666;
+  font-size: 0.8rem;
 }
 
 /* Ajuste del menú cuando Bootstrap lo presenta colapsado */
