@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Patua+One&family=Playfair+Display:wght@500;600;700&display=swap");
 
 /* Estilos generales y paleta */
 :root {
@@ -85,7 +85,7 @@ h2 {
 }
 
 .navbar-brand {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Patua One", Georgia, serif;
   font-weight: 700;
   font-size: 1.5rem;
 }
