@@ -5,6 +5,8 @@ import { productosIniciales } from './data/productosIniciales'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
 import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
+import { ajustarCarrito, esCarritoValido, maximoComprable } from './utils/carrito'
+import CarritoView from './views/CarritoView'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
 import AdminInicioView from './views/AdminInicioView'
@@ -66,6 +68,27 @@ function cargarUsuarios() {
     usuarios: iniciales,
     puedeGuardar: false,
     aviso: 'Los datos guardados de usuarios no son válidos. Se muestran los registros iniciales sin sobrescribirlos. Los cambios de esta sesión no se conservarán después de recargar.',
+  }
+}
+
+const claveCarrito = 'huertohogar-carrito-v1'
+const avisoSinAlmacenamientoCarrito = 'El almacenamiento local del carrito no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
+
+function cargarCarrito() {
+  try {
+    const guardado = localStorage.getItem(claveCarrito)
+    if (guardado === null) return { carrito: [], puedeGuardar: true, aviso: '' }
+    const carrito = JSON.parse(guardado)
+    if (esCarritoValido(carrito)) return { carrito, puedeGuardar: true, aviso: '' }
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) {
+      return { carrito: [], puedeGuardar: false, aviso: avisoSinAlmacenamientoCarrito }
+    }
+  }
+  return {
+    carrito: [],
+    puedeGuardar: false,
+    aviso: 'Los datos guardados del carrito no son válidos. Se utiliza un carrito vacío sin sobrescribirlos. Los cambios de esta sesión no se conservarán después de recargar.',
   }
 }
 
@@ -172,15 +195,78 @@ function App() {
     setUsuarios((actuales) => actuales.filter((usuario) => usuario.id !== id))
   }
 
+  const [cargaCarrito] = useState(cargarCarrito)
+  const [carrito, setCarrito] = useState(cargaCarrito.carrito)
+  const [avisoCarrito, setAvisoCarrito] = useState(cargaCarrito.aviso)
+  const [mensajeCarrito, setMensajeCarrito] = useState('')
+  const carritoDisponible = ajustarCarrito(carrito, productos)
+  const cantidadCarrito = carritoDisponible.reduce((suma, articulo) => suma + articulo.cantidad, 0)
+
+  useEffect(() => {
+    if (carritoDisponible !== carrito) {
+      setCarrito(carritoDisponible)
+      setMensajeCarrito('El carrito fue ajustado por cambios de disponibilidad del catálogo.')
+    }
+  }, [carrito, carritoDisponible])
+
+  useEffect(() => {
+    if (!cargaCarrito.puedeGuardar) return
+    try {
+      // Guarda solo artículos vigentes, incluso al corregir un carrito recién cargado.
+      const serializado = JSON.stringify(carritoDisponible)
+      if (localStorage.getItem(claveCarrito) !== serializado) localStorage.setItem(claveCarrito, serializado)
+      setAvisoCarrito('')
+    } catch {
+      setAvisoCarrito(avisoSinAlmacenamientoCarrito)
+    }
+  }, [carritoDisponible, cargaCarrito.puedeGuardar])
+
+  function agregarAlCarrito(codigo) {
+    const producto = productos.find((item) => item.codigo === codigo)
+    const maximo = maximoComprable(producto)
+    if (!producto || maximo < 1) {
+      setMensajeCarrito('El producto no está disponible para agregar una unidad entera.')
+      return
+    }
+    const cantidad = carritoDisponible.find((articulo) => articulo.codigo === codigo)?.cantidad ?? 0
+    if (cantidad >= maximo || !Number.isSafeInteger(cantidad + 1)) {
+      setMensajeCarrito(`Se alcanzó el stock disponible de ${producto.nombre}.`)
+      return
+    }
+    setCarrito((actuales) => {
+      const vigentes = ajustarCarrito(actuales, productos)
+      return vigentes.some((articulo) => articulo.codigo === codigo)
+        ? vigentes.map((articulo) => articulo.codigo === codigo ? { codigo, cantidad: Math.min(articulo.cantidad + 1, maximo) } : articulo)
+        : [...vigentes, { codigo, cantidad: 1 }]
+    })
+    setMensajeCarrito(`${producto.nombre} agregado al carrito. Cantidad: ${cantidad + 1}.`)
+  }
+
+  function modificarCantidad(codigo, cantidad) {
+    const producto = productos.find((item) => item.codigo === codigo)
+    if (!Number.isSafeInteger(cantidad) || cantidad < 1 || cantidad > maximoComprable(producto)) return
+    if (!carritoDisponible.some((articulo) => articulo.codigo === codigo)) return
+    setCarrito((actuales) => ajustarCarrito(actuales, productos).map((articulo) => articulo.codigo === codigo ? { codigo, cantidad } : articulo))
+    setMensajeCarrito(`Cantidad de ${producto.nombre}: ${cantidad}.`)
+  }
+
+  function eliminarDelCarrito(codigo) {
+    const producto = productos.find((item) => item.codigo === codigo)
+    setCarrito((actuales) => actuales.filter((articulo) => articulo.codigo !== codigo))
+    setMensajeCarrito(`${producto?.nombre ?? codigo} retirado del carrito.`)
+  }
+
   return (
     <>
       {aviso && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
+      {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
-        <Route path="/" element={<PublicLayout />}>
+        <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} />}>
           <Route index element={<InicioView productos={productos} />} />
-          <Route path="productos" element={<ProductosView productos={productos} />} />
-          <Route path="producto/:codigo" element={<DetalleProductoView productos={productos} />} />
+          <Route path="productos" element={<ProductosView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
+          <Route path="producto/:codigo" element={<DetalleProductoView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
+          <Route path="carrito" element={<CarritoView carrito={carritoDisponible} productos={productos} modificarCantidad={modificarCantidad} eliminarDelCarrito={eliminarDelCarrito} />} />
           <Route path="nosotros" element={<NosotrosView />} />
           <Route path="blog" element={<BlogView />} />
           <Route path="blog/:slug" element={<DetalleBlogView />} />

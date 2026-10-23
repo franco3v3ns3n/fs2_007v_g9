@@ -1,7 +1,8 @@
 import { Button, Col, Image, Row } from 'react-bootstrap'
 import { Link, useParams } from 'react-router-dom'
+import { maximoComprable } from '../utils/carrito'
 
-function DetalleProductoView({ productos }) {
+function DetalleProductoView({ productos, carrito, agregarAlCarrito }) {
   const { codigo } = useParams()
   const producto = productos.find((item) => item.codigo === codigo)
 
@@ -13,6 +14,9 @@ function DetalleProductoView({ productos }) {
       </>
     )
   }
+
+  const maximo = maximoComprable(producto)
+  const cantidadEnCarrito = carrito.find((articulo) => articulo.codigo === codigo)?.cantidad ?? 0
 
   return (
     <Row className="justify-content-center">
@@ -29,6 +33,10 @@ function DetalleProductoView({ productos }) {
             <h2 className="h4">Precio y disponibilidad</h2>
             <p className="product-price"><strong>Precio:</strong> ${producto.precio.toLocaleString('es-CL')} por {producto.unidadPrecio}</p>
             <p><strong>Stock:</strong> {producto.stock} {producto.unidadStock}</p>
+            <Button onClick={() => agregarAlCarrito(producto.codigo)} disabled={maximo < 1 || cantidadEnCarrito >= maximo}
+              aria-label={`Agregar al carrito: ${producto.nombre}`}>Agregar al carrito</Button>
+            {maximo < 1 ? <p className="small text-body-secondary mt-2 mb-0">No disponible para agregar una unidad entera.</p>
+              : cantidadEnCarrito >= maximo && <p className="small text-body-secondary mt-2 mb-0">Has alcanzado el stock disponible en el carrito.</p>}
           </section>
 
           <section className="mb-4">

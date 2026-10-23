@@ -1,7 +1,9 @@
 import { Button, Card } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
+import { maximoComprable } from '../utils/carrito'
 
-function ProductCard({ producto }) {
+function ProductCard({ producto, cantidadEnCarrito, agregarAlCarrito }) {
+  const maximo = maximoComprable(producto)
   return (
     <Card as="article" className="h-100">
       <Card.Img variant="top" src={producto.imagen} alt={producto.imagenReferencial ? 'Imagen referencial de productos de HuertoHogar' : producto.nombre}
@@ -15,9 +17,13 @@ function ProductCard({ producto }) {
         </Card.Text>
         <Card.Text><strong>Stock:</strong> {producto.stock} {producto.unidadStock}</Card.Text>
         <Card.Text>{producto.descripcion}</Card.Text>
-        <Button as={Link} role="link" to={`/producto/${producto.codigo}`} variant="outline-primary" className="mt-auto align-self-start">
-          Ver detalle
-        </Button>
+        <div className="mt-auto d-flex flex-column align-items-start gap-2">
+          <Button as={Link} role="link" to={`/producto/${producto.codigo}`} variant="outline-primary">Ver detalle</Button>
+          <Button onClick={() => agregarAlCarrito(producto.codigo)} disabled={maximo < 1 || cantidadEnCarrito >= maximo}
+            aria-label={`Agregar al carrito: ${producto.nombre}`}>Agregar al carrito</Button>
+          {maximo < 1 ? <p className="small text-body-secondary mb-0">No disponible para agregar una unidad entera.</p>
+            : cantidadEnCarrito >= maximo && <p className="small text-body-secondary mb-0">Has alcanzado el stock disponible en el carrito.</p>}
+        </div>
       </Card.Body>
     </Card>
   )

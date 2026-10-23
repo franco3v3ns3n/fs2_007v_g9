@@ -401,6 +401,17 @@ form .text-success {
 }
 
 /* Ajuste del menú cuando Bootstrap lo presenta colapsado */
+/* La navegación pública incorpora Carrito y se colapsa hasta xl. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .navbar-tienda .navbar-collapse {
+    padding-top: 0.8rem;
+  }
+
+  .navbar-tienda .nav-link {
+    padding: 0.65rem 0.8rem;
+  }
+}
+
 @media (max-width: 991.98px) {
   .navbar-collapse {
     padding-top: 0.8rem;
@@ -409,4 +420,18 @@ form .text-success {
   .navbar .nav-link {
     padding: 0.65rem 0.8rem;
   }
+}
+
+/* Carrito: conserva las tarjetas y la paleta existentes. */
+.carrito-imagen {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--hh-border);
+  border-radius: 0.75rem;
+}
+
+.carrito-articulo {
+  overflow-wrap: anywhere;
 }

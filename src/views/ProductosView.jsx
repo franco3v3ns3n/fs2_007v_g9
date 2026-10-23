@@ -20,7 +20,7 @@ const categorias = [
   },
 ]
 
-function ProductosView({ productos }) {
+function ProductosView({ productos, carrito, agregarAlCarrito }) {
   return (
     <>
       <section className="mb-5">
@@ -39,7 +39,8 @@ function ProductosView({ productos }) {
               .filter((producto) => producto.categoria === categoria.nombre)
               .map((producto) => (
                 <Col xs={12} md={6} lg={4} key={producto.codigo}>
-                  <ProductCard producto={producto} />
+                  <ProductCard producto={producto} agregarAlCarrito={agregarAlCarrito}
+                    cantidadEnCarrito={carrito.find((articulo) => articulo.codigo === producto.codigo)?.cantidad ?? 0} />
                 </Col>
               ))}
           </Row>
