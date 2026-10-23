@@ -1,20 +1,19 @@
-import { Alert, Container } from 'react-bootstrap'
 import { Route, Routes } from 'react-router-dom'
+import PublicLayout from './layouts/PublicLayout'
+import InicioView from './views/InicioView'
 
 function App() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <Container as="main" className="py-5">
-            <h1 className="mb-4">HuertoHogar</h1>
-            <Alert variant="success">
-              React funciona. HuertoHogar está listo para continuar su desarrollo.
-            </Alert>
-          </Container>
-        }
-      />
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<InicioView />} />
+        <Route path="productos" element={null} />
+        <Route path="nosotros" element={null} />
+        <Route path="blog" element={null} />
+        <Route path="contacto" element={null} />
+        <Route path="login" element={null} />
+        <Route path="registro" element={null} />
+      </Route>
     </Routes>
   )
 }
