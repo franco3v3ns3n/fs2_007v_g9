@@ -1,6 +1,6 @@
 import { Button, Card, Col, Image, Row } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
-import { productosIniciales } from '../data/productosIniciales'
+import { useProductos } from '../context/ProductosContext'
 
 const categorias = [
   { nombre: 'Frutas Frescas', descripcion: 'Frutas seleccionadas para disfrutar su sabor y frescura.' },
@@ -10,12 +10,13 @@ const categorias = [
 ]
 
 const destacados = [
-  { codigo: 'FR001', descripcion: 'Manzanas crujientes y dulces cultivadas en el Valle del Maule.' },
-  { codigo: 'VR001', descripcion: "Zanahorias frescas cultivadas sin pesticidas en la Región de O'Higgins." },
-  { codigo: 'PO001', descripcion: 'Miel pura y orgánica producida por apicultores locales.' },
+  { codigo: 'FR001', nombre: 'Manzanas Fuji', origen: 'Valle del Maule', descripcion: 'Manzanas crujientes y dulces cultivadas en el Valle del Maule.' },
+  { codigo: 'VR001', nombre: 'Zanahorias Orgánicas', origen: "Región de O'Higgins", descripcion: "Zanahorias frescas cultivadas sin pesticidas en la Región de O'Higgins." },
+  { codigo: 'PO001', nombre: 'Miel Orgánica', origen: 'Región del Biobío', descripcion: 'Miel pura y orgánica producida por apicultores locales.' },
 ]
 
 function InicioView() {
+  const { productos } = useProductos()
   return (
     <>
       <section className="home-hero p-4 p-lg-5 mb-5 bg-body-tertiary">
@@ -49,18 +50,21 @@ function InicioView() {
         <h2>Productos destacados</h2>
         <Row className="g-4">
           {destacados.map((destacado) => {
-            const producto = productosIniciales.find((item) => item.codigo === destacado.codigo)
+            const producto = productos.find((item) => item.codigo === destacado.codigo)
+            if (!producto) return null
             // Inicio abrevia la unidad (por ejemplo, "frasco") como en EP1.
             const unidadBreve = producto.unidadPrecio.split(' de ')[0]
             return (
               <Col xs={12} md={6} lg={4} key={producto.codigo}>
                 <Card as="article" className="h-100">
-                  <Card.Img variant="top" src={producto.imagen} className="product-card-image" alt={producto.nombre} width="1200" height="900" />
+                  <Card.Img variant="top" src={producto.imagen} className="product-card-image" alt={producto.imagenReferencial ? 'Imagen referencial de productos de HuertoHogar' : producto.nombre} width="1200" height="900" />
                   <Card.Body className="d-flex flex-column">
+                    {producto.imagenReferencial && <p className="small text-body-secondary">Imagen referencial de HuertoHogar.</p>}
                     <Card.Title as="h3" className="h5">{producto.nombre}</Card.Title>
                     <p><strong>Código:</strong> {producto.codigo}</p>
                     <p className="product-price"><strong>Precio:</strong> ${producto.precio.toLocaleString('es-CL')} por {unidadBreve}</p>
-                    <p>{destacado.descripcion}</p>
+                    <p>{producto.nombre === destacado.nombre && producto.origen === destacado.origen && !producto.imagenReferencial
+                      ? destacado.descripcion : producto.descripcion}</p>
                     <Button as={Link} role="link" to={`/producto/${producto.codigo}`} variant="outline-primary" className="mt-auto align-self-start">Ver detalle</Button>
                   </Card.Body>
                 </Card>

@@ -1,6 +1,6 @@
 import { Col, Row } from 'react-bootstrap'
 import ProductCard from '../components/ProductCard'
-import { productosIniciales } from '../data/productosIniciales'
+import { useProductos } from '../context/ProductosContext'
 
 const categorias = [
   {
@@ -22,6 +22,7 @@ const categorias = [
 ]
 
 function ProductosView() {
+  const { productos } = useProductos()
   return (
     <>
       <section className="mb-5">
@@ -36,7 +37,7 @@ function ProductosView() {
           <h2>{categoria.nombre}</h2>
           <p>{categoria.descripcion}</p>
           <Row className="g-4">
-            {productosIniciales
+            {productos
               .filter((producto) => producto.categoria === categoria.nombre)
               .map((producto) => (
                 <Col xs={12} md={6} lg={4} key={producto.codigo}>
@@ -44,6 +45,9 @@ function ProductosView() {
                 </Col>
               ))}
           </Row>
+          {!productos.some((producto) => producto.categoria === categoria.nombre) && (
+            <p className="small text-body-secondary">No hay productos disponibles en esta categoría.</p>
+          )}
         </section>
       ))}
     </>

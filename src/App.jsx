@@ -2,6 +2,9 @@ import { Route, Routes } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
 import AdminInicioView from './views/AdminInicioView'
+import AdminProductosView from './views/AdminProductosView'
+import AdminNuevoProductoView from './views/AdminNuevoProductoView'
+import AdminEditarProductoView from './views/AdminEditarProductoView'
 import InicioView from './views/InicioView'
 import ProductosView from './views/ProductosView'
 import DetalleProductoView from './views/DetalleProductoView'
@@ -28,7 +31,9 @@ function App() {
       </Route>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminInicioView />} />
-        <Route path="productos" element={null} />
+        <Route path="productos" element={<AdminProductosView />} />
+        <Route path="productos/nuevo" element={<AdminNuevoProductoView />} />
+        <Route path="productos/:codigo/editar" element={<AdminEditarProductoView />} />
         <Route path="usuarios" element={null} />
       </Route>
     </Routes>

@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom'
 function ProductCard({ producto }) {
   return (
     <Card as="article" className="h-100">
-      <Card.Img variant="top" src={producto.imagen} alt={producto.nombre}
+      <Card.Img variant="top" src={producto.imagen} alt={producto.imagenReferencial ? 'Imagen referencial de productos de HuertoHogar' : producto.nombre}
         className="product-card-image" width="1200" height="900" />
       <Card.Body className="d-flex flex-column">
+        {producto.imagenReferencial && <p className="small text-body-secondary">Imagen referencial de HuertoHogar.</p>}
         <Card.Title as="h3" className="h5">{producto.nombre}</Card.Title>
         <Card.Text><strong>Código:</strong> {producto.codigo}</Card.Text>
         <Card.Text className="product-price">
