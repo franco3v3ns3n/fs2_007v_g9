@@ -8,7 +8,7 @@ function PublicLayout({ cantidadCarrito, mensajeCarrito }) {
     <div className="d-flex flex-column min-vh-100">
       <NavbarTienda cantidadCarrito={cantidadCarrito} />
       <Container as="main" className="flex-grow-1 py-4 py-lg-5">
-        {mensajeCarrito && <Alert variant="success" role="status">{mensajeCarrito}</Alert>}
+        {mensajeCarrito && <Alert variant={mensajeCarrito.variante} role="status">{mensajeCarrito.texto}</Alert>}
         <Outlet />
       </Container>
       <FooterTienda />

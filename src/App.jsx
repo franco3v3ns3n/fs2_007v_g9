@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert } from 'react-bootstrap'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
@@ -93,6 +93,7 @@ function cargarCarrito() {
 }
 
 function App() {
+  const ubicacion = useLocation()
   const [carga] = useState(cargarCatalogo)
   const [productos, setProductos] = useState(carga.productos)
   const [aviso, setAviso] = useState(carga.aviso)
@@ -198,14 +199,18 @@ function App() {
   const [cargaCarrito] = useState(cargarCarrito)
   const [carrito, setCarrito] = useState(cargaCarrito.carrito)
   const [avisoCarrito, setAvisoCarrito] = useState(cargaCarrito.aviso)
-  const [mensajeCarrito, setMensajeCarrito] = useState('')
+  const [mensajeCarrito, setMensajeCarrito] = useState(null)
   const carritoDisponible = ajustarCarrito(carrito, productos)
   const cantidadCarrito = carritoDisponible.reduce((suma, articulo) => suma + articulo.cantidad, 0)
 
   useEffect(() => {
+    setMensajeCarrito(null)
+  }, [ubicacion])
+
+  useEffect(() => {
     if (carritoDisponible !== carrito) {
       setCarrito(carritoDisponible)
-      setMensajeCarrito('El carrito fue ajustado por cambios de disponibilidad del catálogo.')
+      setMensajeCarrito({ texto: 'El carrito fue ajustado por cambios de disponibilidad del catálogo.', variante: 'info' })
     }
   }, [carrito, carritoDisponible])
 
@@ -225,12 +230,12 @@ function App() {
     const producto = productos.find((item) => item.codigo === codigo)
     const maximo = maximoComprable(producto)
     if (!producto || maximo < 1) {
-      setMensajeCarrito('El producto no está disponible para agregar una unidad entera.')
+      setMensajeCarrito({ texto: 'El producto no está disponible para agregar una unidad entera.', variante: 'warning' })
       return
     }
     const cantidad = carritoDisponible.find((articulo) => articulo.codigo === codigo)?.cantidad ?? 0
     if (cantidad >= maximo || !Number.isSafeInteger(cantidad + 1)) {
-      setMensajeCarrito(`Se alcanzó el stock disponible de ${producto.nombre}.`)
+      setMensajeCarrito({ texto: `Se alcanzó el stock disponible de ${producto.nombre}.`, variante: 'warning' })
       return
     }
     setCarrito((actuales) => {
@@ -239,7 +244,7 @@ function App() {
         ? vigentes.map((articulo) => articulo.codigo === codigo ? { codigo, cantidad: Math.min(articulo.cantidad + 1, maximo) } : articulo)
         : [...vigentes, { codigo, cantidad: 1 }]
     })
-    setMensajeCarrito(`${producto.nombre} agregado al carrito. Cantidad: ${cantidad + 1}.`)
+    setMensajeCarrito({ texto: `${producto.nombre} agregado al carrito. Cantidad: ${cantidad + 1}.`, variante: 'success' })
   }
 
   function modificarCantidad(codigo, cantidad) {
@@ -247,13 +252,13 @@ function App() {
     if (!Number.isSafeInteger(cantidad) || cantidad < 1 || cantidad > maximoComprable(producto)) return
     if (!carritoDisponible.some((articulo) => articulo.codigo === codigo)) return
     setCarrito((actuales) => ajustarCarrito(actuales, productos).map((articulo) => articulo.codigo === codigo ? { codigo, cantidad } : articulo))
-    setMensajeCarrito(`Cantidad de ${producto.nombre}: ${cantidad}.`)
+    setMensajeCarrito({ texto: `Cantidad de ${producto.nombre}: ${cantidad}.`, variante: 'success' })
   }
 
   function eliminarDelCarrito(codigo) {
     const producto = productos.find((item) => item.codigo === codigo)
     setCarrito((actuales) => actuales.filter((articulo) => articulo.codigo !== codigo))
-    setMensajeCarrito(`${producto?.nombre ?? codigo} retirado del carrito.`)
+    setMensajeCarrito({ texto: `${producto?.nombre ?? codigo} retirado del carrito.`, variante: 'success' })
   }
 
   return (
