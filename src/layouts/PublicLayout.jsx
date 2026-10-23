@@ -7,7 +7,7 @@ function PublicLayout() {
   return (
     <div className="d-flex flex-column min-vh-100">
       <NavbarTienda />
-      <Container as="main" className="flex-grow-1 py-5">
+      <Container as="main" className="flex-grow-1 py-4 py-lg-5">
         <Outlet />
       </Container>
       <FooterTienda />
