@@ -1,9 +1,7 @@
 import { Button, Card, Col, Row } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
-import { useProductos } from '../context/ProductosContext'
 
-function AdminInicioView() {
-  const { productos } = useProductos()
+function AdminInicioView({ productos }) {
   return (
     <>
       <section className="mb-4">

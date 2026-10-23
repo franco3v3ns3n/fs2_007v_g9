@@ -1,11 +1,9 @@
 import { Button } from 'react-bootstrap'
 import { Link, useParams } from 'react-router-dom'
 import ProductoFormulario from '../components/ProductoFormulario'
-import { useProductos } from '../context/ProductosContext'
 
-function AdminEditarProductoView() {
+function AdminEditarProductoView({ productos, actualizarProducto }) {
   const { codigo } = useParams()
-  const { productos, actualizarProducto } = useProductos()
   const producto = productos.find((item) => item.codigo === codigo)
 
   if (!producto) {

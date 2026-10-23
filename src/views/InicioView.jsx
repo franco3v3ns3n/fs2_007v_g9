@@ -1,6 +1,5 @@
 import { Button, Card, Col, Image, Row } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
-import { useProductos } from '../context/ProductosContext'
 import { productosIniciales } from '../data/productosIniciales'
 
 const categorias = [
@@ -16,8 +15,7 @@ const destacados = [
   { codigo: 'PO001', nombre: 'Miel Orgánica', origen: 'Región del Biobío', descripcion: 'Miel pura y orgánica producida por apicultores locales.' },
 ]
 
-function InicioView() {
-  const { productos } = useProductos()
+function InicioView({ productos }) {
   return (
     <>
       <section className="home-hero p-4 p-lg-5 mb-5 bg-body-tertiary">

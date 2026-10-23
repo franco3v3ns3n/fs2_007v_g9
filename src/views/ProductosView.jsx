@@ -1,6 +1,5 @@
 import { Col, Row } from 'react-bootstrap'
 import ProductCard from '../components/ProductCard'
-import { useProductos } from '../context/ProductosContext'
 
 const categorias = [
   {
@@ -21,8 +20,7 @@ const categorias = [
   },
 ]
 
-function ProductosView() {
-  const { productos } = useProductos()
+function ProductosView({ productos }) {
   return (
     <>
       <section className="mb-5">

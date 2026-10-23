@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Alert, Button, Modal, Table } from 'react-bootstrap'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useProductos } from '../context/ProductosContext'
 
-function AdminProductosView() {
-  const { productos, eliminarProducto } = useProductos()
+function AdminProductosView({ productos, eliminarProducto }) {
   const location = useLocation()
   const navigate = useNavigate()
   const [mensaje, setMensaje] = useState(location.state?.mensaje ?? '')

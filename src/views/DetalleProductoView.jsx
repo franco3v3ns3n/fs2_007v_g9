@@ -1,10 +1,8 @@
 import { Button, Col, Image, Row } from 'react-bootstrap'
 import { Link, useParams } from 'react-router-dom'
-import { useProductos } from '../context/ProductosContext'
 
-function DetalleProductoView() {
+function DetalleProductoView({ productos }) {
   const { codigo } = useParams()
-  const { productos } = useProductos()
   const producto = productos.find((item) => item.codigo === codigo)
 
   if (!producto) {

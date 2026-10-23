@@ -1,8 +1,6 @@
 import ProductoFormulario from '../components/ProductoFormulario'
-import { useProductos } from '../context/ProductosContext'
 
-function AdminNuevoProductoView() {
-  const { agregarProducto } = useProductos()
+function AdminNuevoProductoView({ agregarProducto }) {
   return <ProductoFormulario onGuardar={agregarProducto} />
 }
 
