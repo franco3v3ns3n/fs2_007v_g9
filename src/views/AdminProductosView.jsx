@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Button, Modal, Table } from 'react-bootstrap'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useProductos } from '../context/ProductosContext'
 
 function AdminProductosView() {
   const { productos, eliminarProducto } = useProductos()
   const location = useLocation()
+  const navigate = useNavigate()
   const [mensaje, setMensaje] = useState(location.state?.mensaje ?? '')
   const [seleccionado, setSeleccionado] = useState(null)
+
+  useEffect(() => {
+    if (!location.state?.mensaje) return
+    const { mensaje: confirmacion, ...estado } = location.state
+    setMensaje(confirmacion)
+    navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
+      replace: true,
+      state: estado,
+    })
+  }, [location, navigate])
 
   function confirmarEliminacion() {
     eliminarProducto(seleccionado.codigo)

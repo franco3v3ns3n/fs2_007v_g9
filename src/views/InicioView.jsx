@@ -1,6 +1,7 @@
 import { Button, Card, Col, Image, Row } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import { useProductos } from '../context/ProductosContext'
+import { productosIniciales } from '../data/productosIniciales'
 
 const categorias = [
   { nombre: 'Frutas Frescas', descripcion: 'Frutas seleccionadas para disfrutar su sabor y frescura.' },
@@ -52,6 +53,7 @@ function InicioView() {
           {destacados.map((destacado) => {
             const producto = productos.find((item) => item.codigo === destacado.codigo)
             if (!producto) return null
+            const productoOriginal = productosIniciales.find((item) => item.codigo === destacado.codigo)
             // Inicio abrevia la unidad (por ejemplo, "frasco") como en EP1.
             const unidadBreve = producto.unidadPrecio.split(' de ')[0]
             return (
@@ -64,6 +66,7 @@ function InicioView() {
                     <p><strong>Código:</strong> {producto.codigo}</p>
                     <p className="product-price"><strong>Precio:</strong> ${producto.precio.toLocaleString('es-CL')} por {unidadBreve}</p>
                     <p>{producto.nombre === destacado.nombre && producto.origen === destacado.origen && !producto.imagenReferencial
+                      && producto.descripcion === productoOriginal?.descripcion
                       ? destacado.descripcion : producto.descripcion}</p>
                     <Button as={Link} role="link" to={`/producto/${producto.codigo}`} variant="outline-primary" className="mt-auto align-self-start">Ver detalle</Button>
                   </Card.Body>
