@@ -1,5 +1,7 @@
 import { Route, Routes } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
+import AdminLayout from './layouts/AdminLayout'
+import AdminInicioView from './views/AdminInicioView'
 import InicioView from './views/InicioView'
 import ProductosView from './views/ProductosView'
 import DetalleProductoView from './views/DetalleProductoView'
@@ -23,6 +25,11 @@ function App() {
         <Route path="contacto" element={<ContactoView />} />
         <Route path="login" element={<LoginView />} />
         <Route path="registro" element={<RegistroView />} />
+      </Route>
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminInicioView />} />
+        <Route path="productos" element={null} />
+        <Route path="usuarios" element={null} />
       </Route>
     </Routes>
   )
