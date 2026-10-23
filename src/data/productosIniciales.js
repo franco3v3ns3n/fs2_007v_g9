@@ -2,6 +2,8 @@ export const productosIniciales = [
   {
     codigo: 'FR001',
     nombre: 'Manzanas Fuji',
+    origen: 'Valle del Maule',
+    origenSimulado: false,
     categoria: 'Frutas Frescas',
     precio: 1200,
     unidadPrecio: 'kilo',
@@ -13,6 +15,8 @@ export const productosIniciales = [
   {
     codigo: 'FR002',
     nombre: 'Naranjas Valencia',
+    origen: 'Valle del Limarí',
+    origenSimulado: true,
     categoria: 'Frutas Frescas',
     precio: 1000,
     unidadPrecio: 'kilo',
@@ -24,6 +28,8 @@ export const productosIniciales = [
   {
     codigo: 'FR003',
     nombre: 'Plátanos Cavendish',
+    origen: 'Ecuador',
+    origenSimulado: true,
     categoria: 'Frutas Frescas',
     precio: 800,
     unidadPrecio: 'kilo',
@@ -35,6 +41,8 @@ export const productosIniciales = [
   {
     codigo: 'VR001',
     nombre: 'Zanahorias Orgánicas',
+    origen: "Región de O'Higgins",
+    origenSimulado: false,
     categoria: 'Verduras Orgánicas',
     precio: 900,
     unidadPrecio: 'kilo',
@@ -46,6 +54,8 @@ export const productosIniciales = [
   {
     codigo: 'VR002',
     nombre: 'Espinacas Frescas',
+    origen: 'Región del Maule',
+    origenSimulado: true,
     categoria: 'Verduras Orgánicas',
     precio: 700,
     unidadPrecio: 'bolsa de 500g',
@@ -57,6 +67,8 @@ export const productosIniciales = [
   {
     codigo: 'VR003',
     nombre: 'Pimientos Tricolores',
+    origen: 'Región de Coquimbo',
+    origenSimulado: true,
     categoria: 'Verduras Orgánicas',
     precio: 1500,
     unidadPrecio: 'kilo',
@@ -68,6 +80,8 @@ export const productosIniciales = [
   {
     codigo: 'PO001',
     nombre: 'Miel Orgánica',
+    origen: 'Región del Biobío',
+    origenSimulado: true,
     categoria: 'Productos Orgánicos',
     precio: 5000,
     unidadPrecio: 'frasco de 500g',
@@ -79,6 +93,8 @@ export const productosIniciales = [
   {
     codigo: 'PO003',
     nombre: 'Quinua Orgánica',
+    origen: 'Altiplano de Tarapacá',
+    origenSimulado: true,
     categoria: 'Productos Orgánicos',
     precio: 3500,
     unidadPrecio: 'bolsa de 500g',
@@ -90,6 +106,8 @@ export const productosIniciales = [
   {
     codigo: 'PL001',
     nombre: 'Leche Entera',
+    origen: 'Región de Los Lagos',
+    origenSimulado: true,
     categoria: 'Productos Lácteos',
     precio: 1200,
     unidadPrecio: 'litro',

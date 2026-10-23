@@ -1,4 +1,5 @@
 import { Button, Card } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
 
 function ProductCard({ producto }) {
   return (
@@ -13,7 +14,7 @@ function ProductCard({ producto }) {
         </Card.Text>
         <Card.Text><strong>Stock:</strong> {producto.stock} {producto.unidadStock}</Card.Text>
         <Card.Text>{producto.descripcion}</Card.Text>
-        <Button type="button" variant="outline-secondary" className="mt-auto align-self-start" disabled>
+        <Button as={Link} role="link" to={`/producto/${producto.codigo}`} variant="outline-primary" className="mt-auto align-self-start">
           Ver detalle
         </Button>
       </Card.Body>

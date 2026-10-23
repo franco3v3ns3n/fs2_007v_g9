@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import InicioView from './views/InicioView'
 import ProductosView from './views/ProductosView'
+import DetalleProductoView from './views/DetalleProductoView'
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Route path="/" element={<PublicLayout />}>
         <Route index element={<InicioView />} />
         <Route path="productos" element={<ProductosView />} />
+        <Route path="producto/:codigo" element={<DetalleProductoView />} />
         <Route path="nosotros" element={null} />
         <Route path="blog" element={null} />
         <Route path="contacto" element={null} />
