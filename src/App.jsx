@@ -6,6 +6,9 @@ import DetalleProductoView from './views/DetalleProductoView'
 import NosotrosView from './views/NosotrosView'
 import BlogView from './views/BlogView'
 import DetalleBlogView from './views/DetalleBlogView'
+import ContactoView from './views/ContactoView'
+import LoginView from './views/LoginView'
+import RegistroView from './views/RegistroView'
 
 function App() {
   return (
@@ -17,9 +20,9 @@ function App() {
         <Route path="nosotros" element={<NosotrosView />} />
         <Route path="blog" element={<BlogView />} />
         <Route path="blog/:slug" element={<DetalleBlogView />} />
-        <Route path="contacto" element={null} />
-        <Route path="login" element={null} />
-        <Route path="registro" element={null} />
+        <Route path="contacto" element={<ContactoView />} />
+        <Route path="login" element={<LoginView />} />
+        <Route path="registro" element={<RegistroView />} />
       </Route>
     </Routes>
   )
