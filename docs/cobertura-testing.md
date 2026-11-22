@@ -1,5 +1,7 @@
 # HuertoHogar EP2: cobertura de testing
 
+El informe de cobertura documenta la ejecución original en `ep2-react`. En `ep2-v2`, la prueba del alta administrativa comprueba el envío de la contraseña ficticia y `src/tests/Cuentas.test.jsx` cubre registro, administración y migración. Las credenciales para pruebas manuales de EP2 v2 se detallan al final.
+
 ## Objetivo y alcance
 
 Esta suite verifica diez comportamientos existentes: props, eventos y disponibilidad de ProductCard; validación y envío de UsuarioFormulario sin contraseña; renderizado y cálculos de CarritoView; validación y ajuste de artículos; y actualización del contador y persistencia del carrito desde App. No incorpora funcionalidades ni modifica componentes de producción.
@@ -101,3 +103,19 @@ La cobertura global es parcial porque se mide toda la aplicación, pero solo hay
 Estas pruebas no sustituyen la revisión manual del diseño responsivo, la navegación en un navegador real, la compatibilidad entre navegadores, el despliegue ni el funcionamiento de la infraestructura. Esta etapa no realiza verificaciones visuales ni E2E y no accede a AWS EC2.
 
 `coverage/`, `node_modules/` y `dist/` permanecen ignorados. El HTML se regenera con `npm.cmd run coverage`; este informe Markdown sí se versiona.
+
+## Credenciales de demostración de EP2 v2
+
+El registro público y el alta administrativa guardan las contraseñas tal como se ingresan en `localStorage`, bajo la clave `huertohogar-usuarios-v1`. Usa contraseñas ficticias. El almacenamiento en texto plano y la contraseña temporal compartida son exclusivos de la demostración. La autenticación está pendiente.
+
+Al cargar HuertoHogar en un navegador que aún no tiene datos de usuarios guardados, el listado inicial contiene estas credenciales.
+
+| Usuario | Correo | Contraseña de prueba |
+| --- | --- | --- |
+| Ana Torres | `ana.torres@example.com` | `AnaDemo2` |
+| Diego Morales | `diego.morales@example.com` | `DiegoDemo2` |
+| Camila Rojas | `camila.rojas@example.com` | `CamiDemo2` |
+| Felipe Soto | `felipe.soto@example.com` | `FeliDemo2` |
+| Valentina Pérez | `valentina.perez@example.com` | `ValeDemo2` |
+
+Al cargar un listado válido del formato anterior, cada registro sin el campo `password` recibe `Temporal2`. Esto incluye las cuentas iniciales que el navegador ya había guardado sin contraseña. La migración conserva los demás campos y las contraseñas existentes. Una vez guardada, cada cuenta conserva su contraseña en las siguientes recargas.

@@ -50,6 +50,7 @@ function cargarCatalogo() {
 }
 
 const claveUsuarios = 'huertohogar-usuarios-v1'
+const passwordTemporalUsuarios = 'Temporal2'
 const avisoSinAlmacenamientoUsuarios = 'El almacenamiento local de usuarios no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
 
 function cargarUsuarios() {
@@ -58,7 +59,12 @@ function cargarUsuarios() {
     const guardado = localStorage.getItem(claveUsuarios)
     if (guardado === null) return { usuarios: iniciales, puedeGuardar: true, aviso: '' }
     const usuarios = JSON.parse(guardado)
-    if (esConjuntoUsuariosValido(usuarios)) return { usuarios, puedeGuardar: true, aviso: '' }
+    if (esConjuntoUsuariosValido(usuarios)) {
+      const usuariosMigrados = usuarios.map((usuario) => Object.hasOwn(usuario, 'password')
+        ? usuario
+        : { ...usuario, password: passwordTemporalUsuarios })
+      return { usuarios: usuariosMigrados, puedeGuardar: true, aviso: '' }
+    }
   } catch (error) {
     if (!(error instanceof SyntaxError)) {
       return { usuarios: iniciales, puedeGuardar: false, aviso: avisoSinAlmacenamientoUsuarios }
@@ -164,8 +170,8 @@ function App() {
     }
   }, [usuarios, cargaUsuarios.puedeGuardar])
 
-  function guardarUsuario(valores, idOriginal) {
-    const errores = validarUsuario(valores, usuarios, idOriginal)
+  function guardarUsuario(valores, { idOriginal, registroPublico = false } = {}) {
+    const errores = validarUsuario(valores, usuarios, { idOriginal, registroPublico })
     const anterior = usuarios.find((usuario) => usuario.id === idOriginal)
     if (idOriginal !== undefined && !anterior) errores.general = 'Usuario no encontrado.'
     if (Object.keys(errores).length) return { errores }
@@ -176,7 +182,8 @@ function App() {
       apellido: valores.apellido.trim(),
       correo: normalizarCorreo(valores.correo),
       telefono: valores.telefono.trim(),
-      direccion: valores.direccion.trim(),
+      direccion: registroPublico ? '' : valores.direccion.trim(),
+      password: anterior ? anterior.password : valores.password,
     }
     setUsuarios((actuales) => anterior
       ? actuales.map((item) => item.id === idOriginal ? usuario : item)
@@ -189,7 +196,7 @@ function App() {
   }
 
   function actualizarUsuario(idOriginal, valores) {
-    return guardarUsuario(valores, idOriginal)
+    return guardarUsuario(valores, { idOriginal })
   }
 
   function eliminarUsuario(id) {
@@ -277,7 +284,7 @@ function App() {
           <Route path="blog/:slug" element={<DetalleBlogView />} />
           <Route path="contacto" element={<ContactoView />} />
           <Route path="login" element={<LoginView />} />
-          <Route path="registro" element={<RegistroView />} />
+          <Route path="registro" element={<RegistroView registrarUsuario={(valores) => guardarUsuario(valores, { registroPublico: true })} />} />
         </Route>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminInicioView productos={productos} />} />

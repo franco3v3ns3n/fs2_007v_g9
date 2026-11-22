@@ -34,7 +34,7 @@ function AdminUsuariosView({ usuarios, eliminarUsuario }) {
       {mensaje && <Alert variant="success" role="status">{mensaje}</Alert>}
       <section className="mb-4">
         <h2>Listado de usuarios</h2>
-        <p className="small text-body-secondary">Puedes editar o eliminar cualquier registro simulado. Los cambios se conservan localmente en este navegador, si el almacenamiento está disponible. No son cuentas para iniciar sesión.</p>
+        <p className="small text-body-secondary">Puedes editar o eliminar cualquier registro simulado. Los cambios se conservan localmente en este navegador, si el almacenamiento está disponible.</p>
         {usuarios.length === 0 ? <p>No hay usuarios registrados en el prototipo.</p> : (
           <div className="table-responsive border rounded" role="region" aria-label="Listado de usuarios" tabIndex={0}>
             <Table striped hover className="align-middle mb-0">

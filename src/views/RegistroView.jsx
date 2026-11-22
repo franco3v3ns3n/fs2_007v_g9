@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Button, Card, Col, Form, Row } from 'react-bootstrap'
 import CampoFormulario from '../components/CampoFormulario'
-import { validarCorreo, validarPassword, validarTelefono } from '../utils/validaciones'
 
-function RegistroView() {
-  const [valores, setValores] = useState({ nombre: '', apellido: '', correo: '', telefono: '', password: '', confirmar: '' })
+const valoresIniciales = { nombre: '', apellido: '', correo: '', telefono: '', password: '', confirmar: '' }
+
+function RegistroView({ registrarUsuario }) {
+  const [valores, setValores] = useState(valoresIniciales)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState('')
 
@@ -17,16 +18,14 @@ function RegistroView() {
 
   function enviar(event) {
     event.preventDefault()
-    const nuevosErrores = {
-      nombre: valores.nombre.trim() ? '' : 'Ingresa tu nombre.',
-      apellido: valores.apellido.trim() ? '' : 'Ingresa tu apellido.',
-      correo: validarCorreo(valores.correo),
-      telefono: validarTelefono(valores.telefono),
-      password: validarPassword(valores.password),
-      confirmar: valores.confirmar === '' ? 'Confirma tu contraseña.' : valores.confirmar !== valores.password ? 'Las contraseñas no coinciden.' : '',
+    const { errores: nuevosErrores } = registrarUsuario(valores)
+    setErrores(nuevosErrores ?? {})
+    if (nuevosErrores) {
+      setMensaje('')
+      return
     }
-    setErrores(nuevosErrores)
-    setMensaje(Object.values(nuevosErrores).some(Boolean) ? '' : 'Formulario de registro validado correctamente.')
+    setValores(valoresIniciales)
+    setMensaje('Cuenta creada correctamente.')
   }
 
   return (
