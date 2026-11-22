@@ -54,6 +54,7 @@ describe('Formulario de inicio de sesión', () => {
     const administrador = screen.getByRole('tab', { name: 'Administrador' })
     expect(cliente).toHaveAttribute('aria-selected', 'true')
     expect(administrador).toHaveAttribute('aria-selected', 'false')
+    expect(screen.queryByRole('complementary', { name: 'Credenciales' })).not.toBeInTheDocument()
 
     await ingresar(user, 'correo-invalido', '123')
     expect(screen.getByLabelText('Correo electrónico:')).toHaveAttribute('aria-invalid', 'true')
@@ -63,6 +64,11 @@ describe('Formulario de inicio de sesión', () => {
 
     expect(administrador).toHaveFocus()
     expect(administrador).toHaveAttribute('aria-selected', 'true')
+    const nota = screen.getByRole('complementary', { name: 'Credenciales' })
+    expect(screen.getByRole('heading', { name: 'Inicio de sesión' }).closest('section').nextElementSibling).toBe(nota)
+    expect(Array.from(nota.children, (elemento) => elemento.textContent)).toEqual([
+      'Credenciales', `Correo: ${admin.correo}`, `Contraseña: ${admin.password}`,
+    ])
     for (const etiqueta of ['Correo electrónico:', 'Contraseña:']) {
       expect(screen.getByLabelText(etiqueta)).toHaveValue('')
       expect(screen.getByLabelText(etiqueta)).toHaveAttribute('aria-invalid', 'false')
@@ -72,6 +78,7 @@ describe('Formulario de inicio de sesión', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(errorCredenciales)
     await user.click(cliente)
     expect(cliente).toHaveAttribute('aria-selected', 'true')
+    expect(nota).not.toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Correo electrónico:')).toHaveValue('')
     expect(screen.getByLabelText('Contraseña:')).toHaveValue('')

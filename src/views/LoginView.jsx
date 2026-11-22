@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Card, Col, Form, Row, Tab, Tabs } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import CampoFormulario from '../components/CampoFormulario'
+import { administradorDemo } from '../data/administradorDemo'
 import { validarCorreo, validarPassword } from '../utils/validaciones'
 
 const valoresIniciales = { correo: '', password: '' }
@@ -65,6 +66,13 @@ function LoginView({ iniciarSesion }) {
             </Tabs>
           </Card.Body>
         </Card>
+        {tipo === 'administrador' && (
+          <aside aria-labelledby="credencialesAdmin" className="bg-warning-subtle text-dark rounded-1 shadow-sm mt-3 p-3">
+            <h2 id="credencialesAdmin" className="h6 fw-bold mb-2">Credenciales</h2>
+            <p className="mb-1"><strong>Correo:</strong> <code>{administradorDemo.correo}</code></p>
+            <p className="mb-0"><strong>Contraseña:</strong> <code>{administradorDemo.password}</code></p>
+          </aside>
+        )}
       </Col>
     </Row>
   )
