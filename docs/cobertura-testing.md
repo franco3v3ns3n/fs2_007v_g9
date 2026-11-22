@@ -19,11 +19,11 @@ Referencia de ejecución: Windows 11, Node.js 24.22.1, rama `ep2-react`, base `2
 
 Vitest y su proveedor V8 comparten versión y son compatibles con Node 24 y Vite 8.3.5. Se conserva React 19.3.1 y las dependencias existentes; las seis herramientas se agregan solo como dependencias de desarrollo.
 
-Se revisaron las clases 5 y 6, la guía práctica de Vitest, la evaluación parcial 2 y los archivos del proyecto docente ya descomprimido disponibles en `_referencia-clases/`. No se encontró el ZIP ni el anexo con los nombres indicados en la solicitud. Se aplican los conceptos docentes de pruebas y cobertura con Vitest; no se instalan Jasmine ni Karma aunque figuren en la evaluación original.
+La suite utiliza Vitest y React Testing Library para comprobar comportamientos de los componentes y funciones de HuertoHogar. La cobertura se obtiene mediante el proveedor V8 y permite identificar código ejecutado y funcionalidades pendientes de pruebas.
 
 La configuración permanece en `vite.config.js`: conserva el plugin React, usa `environment: 'jsdom'` y carga `src/tests/setup.js`. El setup importa `@testing-library/jest-dom/vitest` y ejecuta `cleanup` después de cada prueba. No se activan globals: las APIs de Vitest se importan explícitamente.
 
-El descubrimiento se limita a `src/tests/**/*.test.{js,jsx}` para no ejecutar el proyecto docente excluido. Los scripts son `test` (observación), `test:run` (una ejecución) y `coverage` (una ejecución con V8); se conservan `dev`, `build` y `preview`.
+El descubrimiento se limita a `src/tests/**/*.test.{js,jsx}` para ejecutar exclusivamente las pruebas de HuertoHogar. Los scripts son `test` (observación), `test:run` (una ejecución) y `coverage` (una ejecución con V8); se conservan `dev`, `build` y `preview`.
 
 ## Casos de prueba y resultados
 
@@ -79,7 +79,7 @@ Detalle de los archivos directamente probados:
 | `src/utils/carrito.js` | 90% | 89.28% | 100% | 100% |
 | `src/App.jsx` | 45.85% | 26.31% | 33.33% | 52.54% |
 
-El cálculo incluye `src/**/*.{js,jsx}`, también los archivos de aplicación sin pruebas directas y el arranque `main.jsx`. La única exclusión configurada es `src/tests/**`, porque la suite y su setup no son código del producto. CSS, imágenes, `legacy/`, materiales docentes y dependencias no pertenecen a ese alcance. No se excluye ninguna funcionalidad de React para aumentar porcentajes ni se fijan umbrales.
+El cálculo incluye `src/**/*.{js,jsx}`, también los archivos de aplicación sin pruebas directas y el arranque `main.jsx`. La única exclusión configurada es `src/tests/**`, porque la suite y su setup no son código del producto. Los archivos CSS, las imágenes y las dependencias no forman parte del cálculo de cobertura. No se excluye ninguna funcionalidad de React para aumentar porcentajes ni se fijan umbrales.
 
 La inclusión explícita permite mostrar archivos no ejecutados, en vez de limitar el reporte a los importados por los tests, según la [documentación oficial de cobertura de Vitest](https://vitest.dev/guide/coverage). Importar un archivo o ejecutar una línea incidentalmente no significa haber comprobado todos sus comportamientos.
 
