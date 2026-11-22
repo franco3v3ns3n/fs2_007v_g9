@@ -290,6 +290,25 @@ function App() {
     setMensajeCarrito({ texto: `${producto?.nombre ?? codigo} retirado del carrito.`, variante: 'success' })
   }
 
+  function confirmarCompra() {
+    if (carritoDisponible.length === 0 || !esCarritoValido(carritoDisponible)) return
+    if (!clienteSesion) {
+      navegar('/login', { state: { volverAlCarrito: true } })
+      return
+    }
+
+    // Confirma solo si el carrito vacío quedará guardado después de recargar.
+    if (!cargaCarrito.puedeGuardar) return
+    try {
+      localStorage.setItem(claveCarrito, '[]')
+    } catch {
+      setAvisoCarrito(avisoSinAlmacenamientoCarrito)
+      return
+    }
+    setCarrito([])
+    setMensajeCarrito({ texto: 'Compra realizada correctamente.', variante: 'success' })
+  }
+
   return (
     <>
       {aviso && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
@@ -300,7 +319,7 @@ function App() {
           <Route index element={<InicioView productos={productos} />} />
           <Route path="productos" element={<ProductosView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
           <Route path="producto/:codigo" element={<DetalleProductoView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
-          <Route path="carrito" element={<CarritoView carrito={carritoDisponible} productos={productos} modificarCantidad={modificarCantidad} eliminarDelCarrito={eliminarDelCarrito} />} />
+          <Route path="carrito" element={<CarritoView carrito={carritoDisponible} productos={productos} modificarCantidad={modificarCantidad} eliminarDelCarrito={eliminarDelCarrito} confirmarCompra={confirmarCompra} />} />
           <Route path="nosotros" element={<NosotrosView />} />
           <Route path="blog" element={<BlogView />} />
           <Route path="blog/:slug" element={<DetalleBlogView />} />

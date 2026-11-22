@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Card, Col, Form, Row, Tab, Tabs } from 'react-bootstrap'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import CampoFormulario from '../components/CampoFormulario'
 import { administradorDemo } from '../data/administradorDemo'
 import { validarCorreo, validarPassword } from '../utils/validaciones'
@@ -9,6 +9,7 @@ const valoresIniciales = { correo: '', password: '' }
 
 function LoginView({ iniciarSesion }) {
   const navegar = useNavigate()
+  const { state } = useLocation()
   const [tipo, setTipo] = useState('cliente')
   const [valores, setValores] = useState(valoresIniciales)
   const [errores, setErrores] = useState({})
@@ -41,7 +42,8 @@ function LoginView({ iniciarSesion }) {
       setMensaje('Correo electrónico o contraseña incorrectos.')
       return
     }
-    navegar(tipo === 'administrador' ? '/admin' : '/', { replace: true })
+    const destinoCliente = state?.volverAlCarrito === true ? '/carrito' : '/'
+    navegar(tipo === 'administrador' ? '/admin' : destinoCliente, { replace: true })
   }
 
   const formulario = (
