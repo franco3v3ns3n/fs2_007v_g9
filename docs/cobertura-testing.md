@@ -106,7 +106,7 @@ Estas pruebas no sustituyen la revisión manual del diseño responsivo, la naveg
 
 ## Credenciales de demostración de EP2 v2
 
-El registro público y el alta administrativa guardan las contraseñas tal como se ingresan en `localStorage`, bajo la clave `huertohogar-usuarios-v1`. Usa contraseñas ficticias. El almacenamiento en texto plano y la contraseña temporal compartida son exclusivos de la demostración. La autenticación está pendiente.
+El registro público y el alta administrativa guardan las contraseñas tal como se ingresan en `localStorage`, bajo la clave `huertohogar-usuarios-v1`. Usa contraseñas ficticias. El almacenamiento en texto plano y la contraseña temporal compartida son exclusivos de la demostración.
 
 Al cargar HuertoHogar en un navegador que aún no tiene datos de usuarios guardados, el listado inicial contiene estas credenciales.
 
@@ -119,3 +119,5 @@ Al cargar HuertoHogar en un navegador que aún no tiene datos de usuarios guarda
 | Valentina Pérez | `valentina.perez@example.com` | `ValeDemo2` |
 
 Al cargar un listado válido del formato anterior, cada registro sin el campo `password` recibe `Temporal2`. Esto incluye las cuentas iniciales que el navegador ya había guardado sin contraseña. La migración conserva los demás campos y las contraseñas existentes. Una vez guardada, cada cuenta conserva su contraseña en las siguientes recargas.
+
+En `/login`, usa la pestaña Cliente para estas cuentas. La pestaña Administrador acepta `admin@huertohogar.cl` con `AdminDemo2` y abre `/admin`. La sesión de demostración guarda el tipo de cuenta y su identificador en `sessionStorage`, bajo `huertohogar-sesion-v1`. Las rutas administrativas conservan el acceso directo y el carrito sigue siendo compartido entre las sesiones del navegador en esta etapa.

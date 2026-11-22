@@ -3,10 +3,10 @@ import { Outlet } from 'react-router-dom'
 import NavbarAdmin from '../components/NavbarAdmin'
 import FooterAdmin from '../components/FooterAdmin'
 
-function AdminLayout() {
+function AdminLayout({ nombreSesion, cerrarSesion }) {
   return (
     <div className="admin-page d-flex flex-column min-vh-100">
-      <NavbarAdmin />
+      <NavbarAdmin nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />
       <Container as="main" className="flex-grow-1 py-4 py-lg-5">
         <Outlet />
       </Container>

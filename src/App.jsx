@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Alert } from 'react-bootstrap'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
 import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
 import { ajustarCarrito, esCarritoValido, maximoComprable } from './utils/carrito'
+import { autenticar, cargarSesion, guardarSesion } from './utils/sesion'
 import CarritoView from './views/CarritoView'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
@@ -100,6 +101,7 @@ function cargarCarrito() {
 
 function App() {
   const ubicacion = useLocation()
+  const navegar = useNavigate()
   const [carga] = useState(cargarCatalogo)
   const [productos, setProductos] = useState(carga.productos)
   const [aviso, setAviso] = useState(carga.aviso)
@@ -158,6 +160,25 @@ function App() {
   const [cargaUsuarios] = useState(cargarUsuarios)
   const [usuarios, setUsuarios] = useState(cargaUsuarios.usuarios)
   const [avisoUsuarios, setAvisoUsuarios] = useState(cargaUsuarios.aviso)
+  const [sesion, setSesion] = useState(() => cargarSesion(cargaUsuarios.usuarios))
+  const clienteSesion = sesion?.tipo === 'cliente' ? usuarios.find((usuario) => usuario.id === sesion.id) : null
+  const nombreSesion = clienteSesion ? `Hola, ${clienteSesion.nombre}` : sesion?.tipo === 'administrador' ? 'Administrador' : ''
+
+  useEffect(() => {
+    guardarSesion(sesion)
+  }, [sesion])
+
+  function iniciarSesion(tipo, valores) {
+    const nuevaSesion = autenticar(tipo, valores, usuarios)
+    if (!nuevaSesion) return false
+    setSesion(nuevaSesion)
+    return true
+  }
+
+  function cerrarSesion() {
+    setSesion(null)
+    navegar('/', { replace: true })
+  }
 
   useEffect(() => {
     if (!cargaUsuarios.puedeGuardar) return
@@ -201,6 +222,7 @@ function App() {
 
   function eliminarUsuario(id) {
     setUsuarios((actuales) => actuales.filter((usuario) => usuario.id !== id))
+    setSesion((actual) => actual?.tipo === 'cliente' && actual.id === id ? null : actual)
   }
 
   const [cargaCarrito] = useState(cargarCarrito)
@@ -274,7 +296,7 @@ function App() {
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
-        <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} />}>
+        <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
           <Route index element={<InicioView productos={productos} />} />
           <Route path="productos" element={<ProductosView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
           <Route path="producto/:codigo" element={<DetalleProductoView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
@@ -283,10 +305,10 @@ function App() {
           <Route path="blog" element={<BlogView />} />
           <Route path="blog/:slug" element={<DetalleBlogView />} />
           <Route path="contacto" element={<ContactoView />} />
-          <Route path="login" element={<LoginView />} />
+          <Route path="login" element={<LoginView iniciarSesion={iniciarSesion} />} />
           <Route path="registro" element={<RegistroView registrarUsuario={(valores) => guardarUsuario(valores, { registroPublico: true })} />} />
         </Route>
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminLayout nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
           <Route index element={<AdminInicioView productos={productos} />} />
           <Route path="productos" element={<AdminProductosView productos={productos} eliminarProducto={eliminarProducto} />} />
           <Route path="productos/nuevo" element={<AdminNuevoProductoView agregarProducto={agregarProducto} />} />
