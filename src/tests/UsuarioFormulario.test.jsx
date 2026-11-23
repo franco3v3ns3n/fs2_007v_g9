@@ -22,7 +22,7 @@ describe('UsuarioFormulario', () => {
     expect(onGuardar).not.toHaveBeenCalled()
   })
 
-  test('guarda los datos válidos sin entregar la contraseña al callback', async () => {
+  test('entrega los datos válidos y la contraseña al crear un usuario', async () => {
     // Arrange
     const user = userEvent.setup()
     const valores = { nombre: 'Camila', apellido: 'Prueba', correo: 'camila@example.com', telefono: '912345678', direccion: 'Calle Simulada 123' }
@@ -40,7 +40,6 @@ describe('UsuarioFormulario', () => {
 
     // Assert
     expect(onGuardar).toHaveBeenCalledTimes(1)
-    expect(onGuardar).toHaveBeenCalledWith(valores)
-    expect(onGuardar.mock.calls[0][0]).not.toHaveProperty('password')
+    expect(onGuardar).toHaveBeenCalledWith({ ...valores, password: 'demo123' })
   })
 })

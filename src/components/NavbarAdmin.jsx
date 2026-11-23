@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { Container, Nav, Navbar } from 'react-bootstrap'
 import { Link, NavLink } from 'react-router-dom'
 
-function NavbarAdmin() {
+function NavbarAdmin({ nombreSesion, cerrarSesion }) {
   const [expanded, setExpanded] = useState(false)
 
   function cerrarMenu() {
     setExpanded(false)
+  }
+
+  function salir() {
+    cerrarMenu()
+    cerrarSesion()
   }
 
   return (
@@ -27,6 +32,12 @@ function NavbarAdmin() {
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/admin/productos" onClick={cerrarMenu}>Productos</Nav.Link></Nav.Item>
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/admin/usuarios" onClick={cerrarMenu}>Usuarios</Nav.Link></Nav.Item>
               <Nav.Item as="li"><Nav.Link as={Link} to="/" onClick={cerrarMenu}>Volver a tienda</Nav.Link></Nav.Item>
+              {nombreSesion && (
+                <>
+                  <Nav.Item as="li"><Navbar.Text className="px-lg-2">{nombreSesion}</Navbar.Text></Nav.Item>
+                  <Nav.Item as="li"><Nav.Link as="button" type="button" onClick={salir}>Cerrar sesión</Nav.Link></Nav.Item>
+                </>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>

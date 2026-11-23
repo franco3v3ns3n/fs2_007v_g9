@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Alert } from 'react-bootstrap'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
 import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
 import { ajustarCarrito, esCarritoValido, maximoComprable } from './utils/carrito'
+import { autenticar, cargarSesion, guardarSesion } from './utils/sesion'
 import CarritoView from './views/CarritoView'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
@@ -50,6 +51,7 @@ function cargarCatalogo() {
 }
 
 const claveUsuarios = 'huertohogar-usuarios-v1'
+const passwordTemporalUsuarios = 'Temporal2'
 const avisoSinAlmacenamientoUsuarios = 'El almacenamiento local de usuarios no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
 
 function cargarUsuarios() {
@@ -58,7 +60,12 @@ function cargarUsuarios() {
     const guardado = localStorage.getItem(claveUsuarios)
     if (guardado === null) return { usuarios: iniciales, puedeGuardar: true, aviso: '' }
     const usuarios = JSON.parse(guardado)
-    if (esConjuntoUsuariosValido(usuarios)) return { usuarios, puedeGuardar: true, aviso: '' }
+    if (esConjuntoUsuariosValido(usuarios)) {
+      const usuariosMigrados = usuarios.map((usuario) => Object.hasOwn(usuario, 'password')
+        ? usuario
+        : { ...usuario, password: passwordTemporalUsuarios })
+      return { usuarios: usuariosMigrados, puedeGuardar: true, aviso: '' }
+    }
   } catch (error) {
     if (!(error instanceof SyntaxError)) {
       return { usuarios: iniciales, puedeGuardar: false, aviso: avisoSinAlmacenamientoUsuarios }
@@ -94,6 +101,7 @@ function cargarCarrito() {
 
 function App() {
   const ubicacion = useLocation()
+  const navegar = useNavigate()
   const [carga] = useState(cargarCatalogo)
   const [productos, setProductos] = useState(carga.productos)
   const [aviso, setAviso] = useState(carga.aviso)
@@ -152,6 +160,25 @@ function App() {
   const [cargaUsuarios] = useState(cargarUsuarios)
   const [usuarios, setUsuarios] = useState(cargaUsuarios.usuarios)
   const [avisoUsuarios, setAvisoUsuarios] = useState(cargaUsuarios.aviso)
+  const [sesion, setSesion] = useState(() => cargarSesion(cargaUsuarios.usuarios))
+  const clienteSesion = sesion?.tipo === 'cliente' ? usuarios.find((usuario) => usuario.id === sesion.id) : null
+  const nombreSesion = clienteSesion ? `Hola, ${clienteSesion.nombre}` : sesion?.tipo === 'administrador' ? 'Administrador' : ''
+
+  useEffect(() => {
+    guardarSesion(sesion)
+  }, [sesion])
+
+  function iniciarSesion(tipo, valores) {
+    const nuevaSesion = autenticar(tipo, valores, usuarios)
+    if (!nuevaSesion) return false
+    setSesion(nuevaSesion)
+    return true
+  }
+
+  function cerrarSesion() {
+    setSesion(null)
+    navegar('/', { replace: true })
+  }
 
   useEffect(() => {
     if (!cargaUsuarios.puedeGuardar) return
@@ -164,8 +191,8 @@ function App() {
     }
   }, [usuarios, cargaUsuarios.puedeGuardar])
 
-  function guardarUsuario(valores, idOriginal) {
-    const errores = validarUsuario(valores, usuarios, idOriginal)
+  function guardarUsuario(valores, { idOriginal, registroPublico = false } = {}) {
+    const errores = validarUsuario(valores, usuarios, { idOriginal, registroPublico })
     const anterior = usuarios.find((usuario) => usuario.id === idOriginal)
     if (idOriginal !== undefined && !anterior) errores.general = 'Usuario no encontrado.'
     if (Object.keys(errores).length) return { errores }
@@ -176,7 +203,8 @@ function App() {
       apellido: valores.apellido.trim(),
       correo: normalizarCorreo(valores.correo),
       telefono: valores.telefono.trim(),
-      direccion: valores.direccion.trim(),
+      direccion: registroPublico ? '' : valores.direccion.trim(),
+      password: anterior ? anterior.password : valores.password,
     }
     setUsuarios((actuales) => anterior
       ? actuales.map((item) => item.id === idOriginal ? usuario : item)
@@ -189,11 +217,12 @@ function App() {
   }
 
   function actualizarUsuario(idOriginal, valores) {
-    return guardarUsuario(valores, idOriginal)
+    return guardarUsuario(valores, { idOriginal })
   }
 
   function eliminarUsuario(id) {
     setUsuarios((actuales) => actuales.filter((usuario) => usuario.id !== id))
+    setSesion((actual) => actual?.tipo === 'cliente' && actual.id === id ? null : actual)
   }
 
   const [cargaCarrito] = useState(cargarCarrito)
@@ -261,25 +290,44 @@ function App() {
     setMensajeCarrito({ texto: `${producto?.nombre ?? codigo} retirado del carrito.`, variante: 'success' })
   }
 
+  function confirmarCompra() {
+    if (carritoDisponible.length === 0 || !esCarritoValido(carritoDisponible)) return
+    if (!clienteSesion) {
+      navegar('/login', { state: { volverAlCarrito: true } })
+      return
+    }
+
+    // Confirma solo si el carrito vacío quedará guardado después de recargar.
+    if (!cargaCarrito.puedeGuardar) return
+    try {
+      localStorage.setItem(claveCarrito, '[]')
+    } catch {
+      setAvisoCarrito(avisoSinAlmacenamientoCarrito)
+      return
+    }
+    setCarrito([])
+    setMensajeCarrito({ texto: 'Compra realizada correctamente.', variante: 'success' })
+  }
+
   return (
     <>
       {aviso && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
-        <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} />}>
+        <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
           <Route index element={<InicioView productos={productos} />} />
           <Route path="productos" element={<ProductosView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
           <Route path="producto/:codigo" element={<DetalleProductoView productos={productos} carrito={carritoDisponible} agregarAlCarrito={agregarAlCarrito} />} />
-          <Route path="carrito" element={<CarritoView carrito={carritoDisponible} productos={productos} modificarCantidad={modificarCantidad} eliminarDelCarrito={eliminarDelCarrito} />} />
+          <Route path="carrito" element={<CarritoView carrito={carritoDisponible} productos={productos} modificarCantidad={modificarCantidad} eliminarDelCarrito={eliminarDelCarrito} confirmarCompra={confirmarCompra} />} />
           <Route path="nosotros" element={<NosotrosView />} />
           <Route path="blog" element={<BlogView />} />
           <Route path="blog/:slug" element={<DetalleBlogView />} />
           <Route path="contacto" element={<ContactoView />} />
-          <Route path="login" element={<LoginView />} />
-          <Route path="registro" element={<RegistroView />} />
+          <Route path="login" element={<LoginView iniciarSesion={iniciarSesion} />} />
+          <Route path="registro" element={<RegistroView registrarUsuario={(valores) => guardarUsuario(valores, { registroPublico: true })} />} />
         </Route>
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminLayout nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
           <Route index element={<AdminInicioView productos={productos} />} />
           <Route path="productos" element={<AdminProductosView productos={productos} eliminarProducto={eliminarProducto} />} />
           <Route path="productos/nuevo" element={<AdminNuevoProductoView agregarProducto={agregarProducto} />} />
