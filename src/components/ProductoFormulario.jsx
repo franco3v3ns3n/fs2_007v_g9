@@ -60,8 +60,8 @@ function ProductoFormulario({ producto, onGuardar }) {
                 </Form.Select>
                 <small id="error-categoriaProducto" className="text-danger d-block mt-1">{errores.categoria}</small>
               </Form.Group>
-              <CampoFormulario id="precioProducto" nombre="precio" etiqueta="Precio:" tipo="number" valor={valores.precio} onChange={cambiar} error={errores.precio} />
-              <CampoFormulario id="stockProducto" nombre="stock" etiqueta="Stock:" tipo="number" valor={valores.stock} onChange={cambiar} error={errores.stock} />
+              <CampoFormulario id="precioProducto" nombre="precio" etiqueta="Precio:" tipo="number" min={1} step={1} valor={valores.precio} onChange={cambiar} error={errores.precio} />
+              <CampoFormulario id="stockProducto" nombre="stock" etiqueta="Stock:" tipo="number" min={0} step={1} valor={valores.stock} onChange={cambiar} error={errores.stock} />
               <CampoFormulario id="descripcionProducto" nombre="descripcion" etiqueta="Descripción:" filas={3} valor={valores.descripcion} onChange={cambiar} error={errores.descripcion} />
               <fieldset className="mt-4">
                 <legend className="h5">Información complementaria</legend>
