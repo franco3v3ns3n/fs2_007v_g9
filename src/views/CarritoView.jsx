@@ -2,7 +2,7 @@ import { Button, Card, Col, Image, Row } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import { maximoComprable } from '../utils/carrito'
 
-function CarritoView({ carrito, productos, modificarCantidad, eliminarDelCarrito }) {
+function CarritoView({ carrito, productos, modificarCantidad, eliminarDelCarrito, confirmarCompra }) {
   const cantidadTotal = carrito.reduce((suma, articulo) => suma + articulo.cantidad, 0)
   const total = carrito.reduce((suma, articulo) => {
     const producto = productos.find((item) => item.codigo === articulo.codigo)
@@ -59,13 +59,16 @@ function CarritoView({ carrito, productos, modificarCantidad, eliminarDelCarrito
                 <h2 className="h4">Resumen del carrito</h2>
                 <p><strong>Número total de artículos:</strong> {cantidadTotal}</p>
                 <p className="product-price"><strong>Total del carrito:</strong> ${total.toLocaleString('es-CL')}</p>
+                <div className="d-grid mb-2">
+                  <Button type="button" onClick={confirmarCompra}>Confirmar compra</Button>
+                </div>
                 <Button as={Link} role="link" to="/productos" variant="outline-primary">Seguir viendo productos</Button>
               </Card.Body>
             </Card>
           </Col>
         </Row>
       )}
-      <p className="small text-body-secondary mt-4">Este carrito es una demostración. No se procesan compras ni pagos.</p>
+      <p className="small text-body-secondary mt-4">Este carrito es una demostración. No se procesan pagos reales.</p>
     </>
   )
 }

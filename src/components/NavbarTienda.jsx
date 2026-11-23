@@ -2,11 +2,16 @@ import { useState } from 'react'
 import { Container, Nav, Navbar } from 'react-bootstrap'
 import { NavLink } from 'react-router-dom'
 
-function NavbarTienda({ cantidadCarrito }) {
+function NavbarTienda({ cantidadCarrito, nombreSesion, cerrarSesion }) {
   const [expanded, setExpanded] = useState(false)
 
   function cerrarMenu() {
     setExpanded(false)
+  }
+
+  function salir() {
+    cerrarMenu()
+    cerrarSesion()
   }
 
   return (
@@ -27,8 +32,17 @@ function NavbarTienda({ cantidadCarrito }) {
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/nosotros" onClick={cerrarMenu}>Nosotros</Nav.Link></Nav.Item>
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/blog" onClick={cerrarMenu}>Blog</Nav.Link></Nav.Item>
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/contacto" onClick={cerrarMenu}>Contacto</Nav.Link></Nav.Item>
-              <Nav.Item as="li"><Nav.Link as={NavLink} to="/login" onClick={cerrarMenu}>Iniciar sesión</Nav.Link></Nav.Item>
-              <Nav.Item as="li"><Nav.Link as={NavLink} to="/registro" onClick={cerrarMenu}>Registro</Nav.Link></Nav.Item>
+              {nombreSesion ? (
+                <>
+                  <Nav.Item as="li"><Navbar.Text className="px-xl-2">{nombreSesion}</Navbar.Text></Nav.Item>
+                  <Nav.Item as="li"><Nav.Link as="button" type="button" onClick={salir}>Cerrar sesión</Nav.Link></Nav.Item>
+                </>
+              ) : (
+                <>
+                  <Nav.Item as="li"><Nav.Link as={NavLink} to="/login" onClick={cerrarMenu}>Iniciar sesión</Nav.Link></Nav.Item>
+                  <Nav.Item as="li"><Nav.Link as={NavLink} to="/registro" onClick={cerrarMenu}>Registro</Nav.Link></Nav.Item>
+                </>
+              )}
               <Nav.Item as="li"><Nav.Link as={NavLink} to="/carrito" onClick={cerrarMenu}>Carrito ({cantidadCarrito})</Nav.Link></Nav.Item>
             </Nav>
           </Navbar.Collapse>
