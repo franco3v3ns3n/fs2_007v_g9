@@ -15,6 +15,7 @@ describe('CarritoView', () => {
     // Assert
     expect(screen.getByRole('heading', { name: 'Carrito de compras' })).toBeInTheDocument()
     expect(screen.getByText('Tu carrito está vacío.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Confirmar compra' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver productos' })).toHaveAttribute('href', '/productos')
   })
 
