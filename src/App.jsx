@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Button } from 'react-bootstrap'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
-import { listarProductos } from './services/productoService'
+import { crearProducto, listarProductos } from './services/productoService'
 import { getErrorMessage } from './utils/getErrorMessage'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
@@ -31,6 +31,20 @@ import RegistroView from './views/RegistroView'
 
 const claveProductos = 'huertohogar-productos-v1'
 const avisoSinAlmacenamiento = 'El almacenamiento local no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
+
+function normalizarDatosProducto(valores) {
+  return {
+    codigo: normalizarCodigo(valores.codigo),
+    nombre: valores.nombre.trim(),
+    categoria: valores.categoria,
+    precio: Number(valores.precio),
+    stock: Number(valores.stock),
+    descripcion: valores.descripcion.trim(),
+    unidadPrecio: valores.unidadPrecio.trim(),
+    unidadStock: valores.unidadStock.trim(),
+    origen: valores.origen.trim(),
+  }
+}
 
 function cargarCatalogo() {
   const iniciales = productosIniciales.map((producto) => ({ ...producto }))
@@ -153,40 +167,46 @@ function App() {
     setCatalogo((actual) => ({ ...actual, productos: modificar(actual.productos), cambiosLocales: true }))
   }
 
-  function guardarProducto(valores, codigoOriginal) {
+  function actualizarProducto(codigoOriginal, valores) {
     const errores = validarProducto(valores, productos, codigoOriginal)
     const anterior = productos.find((producto) => producto.codigo === codigoOriginal)
-    if (codigoOriginal !== undefined && !anterior) errores.general = 'Producto no encontrado.'
+    if (!anterior) errores.general = 'Producto no encontrado.'
     if (Object.keys(errores).length) return { errores }
 
-    const origen = valores.origen.trim() || 'No especificado'
+    const datos = normalizarDatosProducto(valores)
+    const origen = datos.origen || 'No especificado'
     const producto = {
       ...anterior,
-      codigo: normalizarCodigo(valores.codigo),
-      nombre: valores.nombre.trim(),
-      categoria: valores.categoria,
-      precio: Number(valores.precio),
-      stock: Number(valores.stock),
-      descripcion: valores.descripcion.trim(),
-      unidadPrecio: valores.unidadPrecio.trim(),
-      unidadStock: valores.unidadStock.trim(),
+      ...datos,
       origen,
-      origenSimulado: anterior && origen === anterior.origen ? anterior.origenSimulado : true,
-      imagen: anterior?.imagen ?? '/img/portada/portada-huertohogar.webp',
-      imagenReferencial: anterior?.imagenReferencial ?? !anterior,
+      origenSimulado: origen === anterior.origen ? anterior.origenSimulado : true,
+      imagenReferencial: anterior.imagenReferencial ?? false,
     }
-    modificarCatalogoLocalmente((actuales) => anterior
-      ? actuales.map((item) => item.codigo === codigoOriginal ? producto : item)
-      : [...actuales, producto])
+    modificarCatalogoLocalmente((actuales) => actuales.map((item) => item.codigo === codigoOriginal ? producto : item))
     return { producto }
   }
 
-  function agregarProducto(valores) {
-    return guardarProducto(valores)
-  }
+  async function agregarProducto(valores) {
+    const errores = validarProducto(valores, productos)
+    if (Object.keys(errores).length) return { errores }
+    if (!remoto) {
+      return { errores: { general: 'Para guardar el producto, recupera la conexión y vuelve a consultar el catálogo del servidor.' } }
+    }
 
-  function actualizarProducto(codigoOriginal, valores) {
-    return guardarProducto(valores, codigoOriginal)
+    try {
+      const producto = await crearProducto(normalizarDatosProducto(valores))
+      if (!esCatalogoValido([producto]) || !Number.isSafeInteger(producto.id)) {
+        return { errores: { general: 'La respuesta del servidor no contiene un producto válido. Consulta el catálogo antes de reintentar.' } }
+      }
+      setCatalogo((actual) => ({
+        ...actual,
+        productos: [...actual.productos.filter((item) => item.codigo !== producto.codigo), producto],
+      }))
+      return { producto }
+    } catch (error) {
+      const campo = error?.response?.status === 409 ? 'codigo' : 'general'
+      return { errores: { [campo]: getErrorMessage(error, 'No se pudo guardar el producto') } }
+    }
   }
 
   function eliminarProducto(codigo) {
