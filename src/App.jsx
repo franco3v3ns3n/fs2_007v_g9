@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Alert } from 'react-bootstrap'
+import { Alert, Button } from 'react-bootstrap'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
+import { listarProductos } from './services/productoService'
+import { getErrorMessage } from './utils/getErrorMessage'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
 import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
@@ -103,11 +105,41 @@ function App() {
   const ubicacion = useLocation()
   const navegar = useNavigate()
   const [carga] = useState(cargarCatalogo)
-  const [productos, setProductos] = useState(carga.productos)
+  const [catalogo, setCatalogo] = useState({ productos: carga.productos, remoto: false, cambiosLocales: false })
+  const { productos, remoto, cambiosLocales } = catalogo
+  const [consulta, setConsulta] = useState({ cargando: true, error: '' })
+  const [intento, setIntento] = useState(0)
   const [aviso, setAviso] = useState(carga.aviso)
 
   useEffect(() => {
-    if (!carga.puedeGuardar) return
+    const controlador = new AbortController()
+    const { signal } = controlador
+    async function consultarCatalogo() {
+      try {
+        const resultado = await listarProductos(signal)
+        if (signal.aborted) return
+        if (!esCatalogoValido(resultado)) {
+          setConsulta({ cargando: false, error: 'El servidor devolvió un catálogo con datos inválidos.' })
+          return
+        }
+        setCatalogo({ productos: resultado, remoto: true, cambiosLocales: false })
+        setConsulta({ cargando: false, error: '' })
+      } catch (error) {
+        if (!signal.aborted) setConsulta({ cargando: false, error: getErrorMessage(error) })
+      }
+    }
+    consultarCatalogo()
+    return () => controlador.abort()
+  }, [intento])
+
+  function reintentarConsulta() {
+    setConsulta({ cargando: true, error: '' })
+    setIntento((actual) => actual + 1)
+  }
+
+  useEffect(() => {
+    // El GET reemplaza la vista, sin modificar la copia local de respaldo.
+    if (!carga.puedeGuardar || (remoto && !cambiosLocales)) return
     try {
       const serializado = JSON.stringify(productos)
       if (localStorage.getItem(claveProductos) !== serializado) localStorage.setItem(claveProductos, serializado)
@@ -115,7 +147,11 @@ function App() {
     } catch {
       setAviso(avisoSinAlmacenamiento)
     }
-  }, [productos, carga.puedeGuardar])
+  }, [productos, carga.puedeGuardar, remoto, cambiosLocales])
+
+  function modificarCatalogoLocalmente(modificar) {
+    setCatalogo((actual) => ({ ...actual, productos: modificar(actual.productos), cambiosLocales: true }))
+  }
 
   function guardarProducto(valores, codigoOriginal) {
     const errores = validarProducto(valores, productos, codigoOriginal)
@@ -139,7 +175,7 @@ function App() {
       imagen: anterior?.imagen ?? '/img/portada/portada-huertohogar.webp',
       imagenReferencial: anterior?.imagenReferencial ?? !anterior,
     }
-    setProductos((actuales) => anterior
+    modificarCatalogoLocalmente((actuales) => anterior
       ? actuales.map((item) => item.codigo === codigoOriginal ? producto : item)
       : [...actuales, producto])
     return { producto }
@@ -154,7 +190,7 @@ function App() {
   }
 
   function eliminarProducto(codigo) {
-    setProductos((actuales) => actuales.filter((producto) => producto.codigo !== codigo))
+    modificarCatalogoLocalmente((actuales) => actuales.filter((producto) => producto.codigo !== codigo))
   }
 
   const [cargaUsuarios] = useState(cargarUsuarios)
@@ -230,6 +266,7 @@ function App() {
   const [avisoCarrito, setAvisoCarrito] = useState(cargaCarrito.aviso)
   const [mensajeCarrito, setMensajeCarrito] = useState(null)
   const carritoDisponible = ajustarCarrito(carrito, productos)
+  const carritoParaGuardar = remoto ? carritoDisponible : carrito
   const cantidadCarrito = carritoDisponible.reduce((suma, articulo) => suma + articulo.cantidad, 0)
 
   useEffect(() => {
@@ -237,23 +274,23 @@ function App() {
   }, [ubicacion])
 
   useEffect(() => {
-    if (carritoDisponible !== carrito) {
+    if (remoto && carritoDisponible !== carrito) {
       setCarrito(carritoDisponible)
       setMensajeCarrito({ texto: 'El carrito fue ajustado por cambios de disponibilidad del catálogo.', variante: 'info' })
     }
-  }, [carrito, carritoDisponible])
+  }, [carrito, carritoDisponible, remoto])
 
   useEffect(() => {
     if (!cargaCarrito.puedeGuardar) return
     try {
-      // Guarda solo artículos vigentes, incluso al corregir un carrito recién cargado.
-      const serializado = JSON.stringify(carritoDisponible)
+      // El respaldo local puede desconocer artículos que siguen disponibles en el servidor.
+      const serializado = JSON.stringify(carritoParaGuardar)
       if (localStorage.getItem(claveCarrito) !== serializado) localStorage.setItem(claveCarrito, serializado)
       setAvisoCarrito('')
     } catch {
       setAvisoCarrito(avisoSinAlmacenamientoCarrito)
     }
-  }, [carritoDisponible, cargaCarrito.puedeGuardar])
+  }, [carritoParaGuardar, cargaCarrito.puedeGuardar])
 
   function agregarAlCarrito(codigo) {
     const producto = productos.find((item) => item.codigo === codigo)
@@ -268,7 +305,7 @@ function App() {
       return
     }
     setCarrito((actuales) => {
-      const vigentes = ajustarCarrito(actuales, productos)
+      const vigentes = remoto ? ajustarCarrito(actuales, productos) : actuales
       return vigentes.some((articulo) => articulo.codigo === codigo)
         ? vigentes.map((articulo) => articulo.codigo === codigo ? { codigo, cantidad: Math.min(articulo.cantidad + 1, maximo) } : articulo)
         : [...vigentes, { codigo, cantidad: 1 }]
@@ -280,7 +317,8 @@ function App() {
     const producto = productos.find((item) => item.codigo === codigo)
     if (!Number.isSafeInteger(cantidad) || cantidad < 1 || cantidad > maximoComprable(producto)) return
     if (!carritoDisponible.some((articulo) => articulo.codigo === codigo)) return
-    setCarrito((actuales) => ajustarCarrito(actuales, productos).map((articulo) => articulo.codigo === codigo ? { codigo, cantidad } : articulo))
+    setCarrito((actuales) => (remoto ? ajustarCarrito(actuales, productos) : actuales)
+      .map((articulo) => articulo.codigo === codigo ? { codigo, cantidad } : articulo))
     setMensajeCarrito({ texto: `Cantidad de ${producto.nombre}: ${cantidad}.`, variante: 'success' })
   }
 
@@ -294,6 +332,11 @@ function App() {
     if (carritoDisponible.length === 0 || !esCarritoValido(carritoDisponible)) return
     if (!clienteSesion) {
       navegar('/login', { state: { volverAlCarrito: true } })
+      return
+    }
+
+    if (!remoto && carritoDisponible !== carrito) {
+      setMensajeCarrito({ texto: 'Consulta el catálogo del servidor antes de confirmar todos los artículos de tu carrito.', variante: 'warning' })
       return
     }
 
@@ -311,7 +354,14 @@ function App() {
 
   return (
     <>
-      {aviso && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
+      {consulta.cargando && <div className="alert alert-info m-3" aria-live="polite">Consultando el catálogo del servidor. Se muestran datos locales mientras carga.</div>}
+      {consulta.error && (
+        <div className="alert alert-warning m-3 d-flex flex-wrap align-items-center gap-2" aria-live="polite">
+          <span>{consulta.error} Se muestran datos locales.</span>
+          <Button variant="outline-dark" size="sm" onClick={reintentarConsulta}>Reintentar consulta</Button>
+        </div>
+      )}
+      {aviso && (!remoto || cambiosLocales || aviso === avisoSinAlmacenamiento) && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
@@ -331,7 +381,7 @@ function App() {
           <Route index element={<AdminInicioView productos={productos} />} />
           <Route path="productos" element={<AdminProductosView productos={productos} eliminarProducto={eliminarProducto} />} />
           <Route path="productos/nuevo" element={<AdminNuevoProductoView agregarProducto={agregarProducto} />} />
-          <Route path="productos/:codigo/editar" element={<AdminEditarProductoView productos={productos} actualizarProducto={actualizarProducto} />} />
+          <Route path="productos/:codigo/editar" element={<AdminEditarProductoView key={remoto ? 'servidor' : 'local'} productos={productos} actualizarProducto={actualizarProducto} />} />
           <Route path="usuarios" element={<AdminUsuariosView usuarios={usuarios} eliminarUsuario={eliminarUsuario} />} />
           <Route path="usuarios/nuevo" element={<AdminNuevoUsuarioView agregarUsuario={agregarUsuario} />} />
           <Route path="usuarios/:id/editar" element={<AdminEditarUsuarioView usuarios={usuarios} actualizarUsuario={actualizarUsuario} />} />

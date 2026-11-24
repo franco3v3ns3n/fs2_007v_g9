@@ -34,7 +34,7 @@ function AdminProductosView({ productos, eliminarProducto }) {
       {mensaje && <Alert variant="success" role="status">{mensaje}</Alert>}
       <section className="mb-4">
         <h2>Listado de productos</h2>
-        <p className="small text-body-secondary">Puedes editar o eliminar cualquiera de los productos. Los cambios se conservan localmente en este navegador, si el almacenamiento está disponible.</p>
+        <p className="small text-body-secondary">Las altas, ediciones y eliminaciones se guardan solo en este navegador, si el almacenamiento está disponible. Una nueva consulta al servidor vuelve a mostrar el catálogo de Spring Boot.</p>
         {productos.length === 0 ? <p>No hay productos en el catálogo.</p> : (
           <div className="table-responsive border rounded" role="region" aria-label="Listado de productos" tabIndex={0}>
             <Table striped hover className="align-middle mb-0">
