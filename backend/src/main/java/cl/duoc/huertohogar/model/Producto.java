@@ -69,6 +69,22 @@ public class Producto {
         this.imagenReferencial = imagenReferencial;
     }
 
+    public void actualizar(String codigo, String nombre, String categoria, Integer precio, Integer stock,
+                           String descripcion, String unidadPrecio, String unidadStock, String origen) {
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.categoria = categoria;
+        this.precio = precio;
+        this.stock = stock;
+        this.descripcion = descripcion;
+        this.unidadPrecio = unidadPrecio;
+        this.unidadStock = unidadStock;
+        if (!this.origen.equals(origen)) {
+            this.origenSimulado = true;
+        }
+        this.origen = origen;
+    }
+
     public Long getId() {
         return id;
     }

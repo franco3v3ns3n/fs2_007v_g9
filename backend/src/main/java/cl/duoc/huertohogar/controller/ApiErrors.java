@@ -6,6 +6,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
@@ -36,5 +37,10 @@ public class ApiErrors {
     public ResponseEntity<Map<String, String>> estadoInvalido(ResponseStatusException ex) {
         String mensaje = ex.getReason() == null ? "Error en la solicitud." : ex.getReason();
         return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", mensaje));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> idInvalido() {
+        return ResponseEntity.badRequest().body(Map.of("message", "El ID del producto debe ser un número entero válido."));
     }
 }
