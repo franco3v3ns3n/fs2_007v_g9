@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Modal, Table } from 'react-bootstrap'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
@@ -7,6 +7,9 @@ function AdminProductosView({ productos, eliminarProducto }) {
   const navigate = useNavigate()
   const [mensaje, setMensaje] = useState(location.state?.mensaje ?? '')
   const [seleccionado, setSeleccionado] = useState(null)
+  const [error, setError] = useState('')
+  const [eliminando, setEliminando] = useState(false)
+  const eliminacionEnCurso = useRef(false)
 
   useEffect(() => {
     if (!location.state?.mensaje) return
@@ -18,10 +21,34 @@ function AdminProductosView({ productos, eliminarProducto }) {
     })
   }, [location, navigate])
 
-  function confirmarEliminacion() {
-    eliminarProducto(seleccionado.codigo)
-    setMensaje(`Producto ${seleccionado.codigo} eliminado del catálogo.`)
+  function abrirModal(producto) {
+    setMensaje('')
+    setError('')
+    setSeleccionado(producto)
+  }
+
+  function cerrarModal() {
+    if (eliminacionEnCurso.current) return
     setSeleccionado(null)
+  }
+
+  async function confirmarEliminacion() {
+    if (!seleccionado || eliminacionEnCurso.current) return
+    eliminacionEnCurso.current = true
+    setEliminando(true)
+    setError('')
+    try {
+      const resultado = await eliminarProducto(seleccionado.codigo, seleccionado.id)
+      if (resultado.error) {
+        setError(resultado.error)
+        return
+      }
+      setMensaje(`Producto ${seleccionado.codigo} eliminado del catálogo.`)
+      setSeleccionado(null)
+    } finally {
+      eliminacionEnCurso.current = false
+      setEliminando(false)
+    }
   }
 
   return (
@@ -34,7 +61,7 @@ function AdminProductosView({ productos, eliminarProducto }) {
       {mensaje && <Alert variant="success" role="status">{mensaje}</Alert>}
       <section className="mb-4">
         <h2>Listado de productos</h2>
-        <p className="small text-body-secondary">Los productos nuevos se guardan en Spring Boot. Por ahora, las ediciones y eliminaciones se guardan solo en este navegador, si el almacenamiento está disponible. Una nueva consulta vuelve a mostrar el catálogo del servidor.</p>
+        <p className="small text-body-secondary">Las altas, ediciones y eliminaciones se guardan en el servidor de HuertoHogar.</p>
         {productos.length === 0 ? <p>No hay productos en el catálogo.</p> : (
           <div className="table-responsive border rounded" role="region" aria-label="Listado de productos" tabIndex={0}>
             <Table striped hover className="align-middle mb-0">
@@ -51,7 +78,7 @@ function AdminProductosView({ productos, eliminarProducto }) {
                     <td className="text-nowrap">{producto.stock} {producto.unidadStock}</td>
                     <td className="text-nowrap">
                       <Button as={Link} role="link" to={`/admin/productos/${producto.codigo}/editar`} variant="outline-primary" size="sm">Editar</Button>{' '}
-                      <Button variant="outline-danger" size="sm" onClick={() => setSeleccionado(producto)}>Eliminar</Button>
+                      <Button variant="outline-danger" size="sm" onClick={() => abrirModal(producto)}>Eliminar</Button>
                     </td>
                   </tr>
                 ))}
@@ -60,14 +87,17 @@ function AdminProductosView({ productos, eliminarProducto }) {
           </div>
         )}
       </section>
-      <Modal show={Boolean(seleccionado)} onHide={() => setSeleccionado(null)} centered aria-labelledby="tituloEliminarProducto">
-        <Modal.Header closeButton closeLabel="Cerrar">
+      <Modal show={Boolean(seleccionado)} onHide={cerrarModal} centered aria-labelledby="tituloEliminarProducto">
+        <Modal.Header closeButton={!eliminando} closeLabel="Cerrar">
           <Modal.Title id="tituloEliminarProducto">Eliminar producto</Modal.Title>
         </Modal.Header>
-        <Modal.Body>¿Quieres eliminar {seleccionado?.nombre} ({seleccionado?.codigo}) del catálogo? Esta acción no se puede deshacer.</Modal.Body>
+        <Modal.Body>
+          <p className={error ? 'mb-3' : 'mb-0'}>¿Quieres eliminar {seleccionado?.nombre} ({seleccionado?.codigo}) del catálogo? Esta acción no se puede deshacer.</p>
+          {error && <Alert variant="danger" role="alert" className="mb-0">{error}</Alert>}
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setSeleccionado(null)}>Cancelar</Button>
-          <Button variant="danger" onClick={confirmarEliminacion}>Eliminar producto</Button>
+          <Button variant="outline-secondary" disabled={eliminando} onClick={cerrarModal}>Cancelar</Button>
+          <Button variant="danger" disabled={eliminando} onClick={confirmarEliminacion}>{eliminando ? 'Eliminando...' : 'Eliminar producto'}</Button>
         </Modal.Footer>
       </Modal>
     </>

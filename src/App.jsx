@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Button } from 'react-bootstrap'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
-import { crearProducto, listarProductos } from './services/productoService'
+import { actualizarProducto as actualizarProductoRemoto, crearProducto, eliminarProducto as eliminarProductoRemoto, listarProductos } from './services/productoService'
 import { getErrorMessage } from './utils/getErrorMessage'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
 import { usuariosIniciales } from './data/usuariosIniciales'
@@ -30,7 +30,12 @@ import LoginView from './views/LoginView'
 import RegistroView from './views/RegistroView'
 
 const claveProductos = 'huertohogar-productos-v1'
-const avisoSinAlmacenamiento = 'El almacenamiento local no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
+const avisoSinCatalogoRemoto = 'Recupera la conexión y vuelve a consultar el catálogo del servidor para modificar productos.'
+const avisoProductoInexistente = 'El producto ya no existe en el servidor.'
+
+function tieneIdProducto(producto) {
+  return Number.isSafeInteger(producto.id) && producto.id > 0
+}
 
 function normalizarDatosProducto(valores) {
   return {
@@ -47,22 +52,20 @@ function normalizarDatosProducto(valores) {
 }
 
 function cargarCatalogo() {
-  const iniciales = productosIniciales.map((producto) => ({ ...producto }))
   try {
     const guardado = localStorage.getItem(claveProductos)
-    if (guardado === null) return { productos: iniciales, puedeGuardar: true, aviso: '' }
+    if (guardado === null) return { productos: productosIniciales, inicializar: true, aviso: '' }
     const productos = JSON.parse(guardado)
-    if (esCatalogoValido(productos)) return { productos, puedeGuardar: true, aviso: '' }
+    if (esCatalogoValido(productos)) return { productos, inicializar: false, aviso: '' }
   } catch (error) {
     if (!(error instanceof SyntaxError)) {
-      return { productos: iniciales, puedeGuardar: false, aviso: avisoSinAlmacenamiento }
+      return { productos: productosIniciales, inicializar: false, aviso: 'No se pudo leer el respaldo del navegador. Se usa el catálogo incluido en la aplicación.' }
     }
   }
-  // Conserva intacto el contenido recuperable: esta sesión trabaja solo en memoria.
   return {
-    productos: iniciales,
-    puedeGuardar: false,
-    aviso: 'Los datos guardados del catálogo no son válidos. Se muestra el catálogo inicial sin sobrescribirlos. Los cambios de esta sesión no se conservarán después de recargar.',
+    productos: productosIniciales,
+    inicializar: false,
+    aviso: 'El respaldo del navegador no es válido. Se usa el catálogo incluido en la aplicación.',
   }
 }
 
@@ -118,12 +121,13 @@ function cargarCarrito() {
 function App() {
   const ubicacion = useLocation()
   const navegar = useNavigate()
-  const [carga] = useState(cargarCatalogo)
-  const [catalogo, setCatalogo] = useState({ productos: carga.productos, remoto: false, cambiosLocales: false })
-  const { productos, remoto, cambiosLocales } = catalogo
+  const [respaldo] = useState(cargarCatalogo)
+  const [productosRemotos, setProductosRemotos] = useState(null)
+  const remoto = productosRemotos !== null
+  const productos = productosRemotos ?? respaldo.productos
+  const mensajeFuente = remoto ? 'Se conserva el último catálogo recibido del servidor.' : 'Se muestra un respaldo local de solo lectura.'
   const [consulta, setConsulta] = useState({ cargando: true, error: '' })
   const [intento, setIntento] = useState(0)
-  const [aviso, setAviso] = useState(carga.aviso)
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -132,11 +136,11 @@ function App() {
       try {
         const resultado = await listarProductos(signal)
         if (signal.aborted) return
-        if (!esCatalogoValido(resultado)) {
+        if (!esCatalogoValido(resultado) || !resultado.every(tieneIdProducto)) {
           setConsulta({ cargando: false, error: 'El servidor devolvió un catálogo con datos inválidos.' })
           return
         }
-        setCatalogo({ productos: resultado, remoto: true, cambiosLocales: false })
+        setProductosRemotos(resultado)
         setConsulta({ cargando: false, error: '' })
       } catch (error) {
         if (!signal.aborted) setConsulta({ cargando: false, error: getErrorMessage(error) })
@@ -152,65 +156,66 @@ function App() {
   }
 
   useEffect(() => {
-    // El GET reemplaza la vista, sin modificar la copia local de respaldo.
-    if (!carga.puedeGuardar || (remoto && !cambiosLocales)) return
+    // Conserva la copia inicial de EP2. Las respuestas de la API nunca se escriben aquí.
+    if (!respaldo.inicializar) return
     try {
-      const serializado = JSON.stringify(productos)
-      if (localStorage.getItem(claveProductos) !== serializado) localStorage.setItem(claveProductos, serializado)
-      setAviso('')
+      if (localStorage.getItem(claveProductos) === null) {
+        localStorage.setItem(claveProductos, JSON.stringify(respaldo.productos))
+      }
     } catch {
-      setAviso(avisoSinAlmacenamiento)
+      // El respaldo precargado sigue disponible aunque el navegador bloquee la escritura.
     }
-  }, [productos, carga.puedeGuardar, remoto, cambiosLocales])
-
-  function modificarCatalogoLocalmente(modificar) {
-    setCatalogo((actual) => ({ ...actual, productos: modificar(actual.productos), cambiosLocales: true }))
-  }
+  }, [respaldo])
 
   function actualizarProducto(codigoOriginal, valores) {
-    const errores = validarProducto(valores, productos, codigoOriginal)
-    const anterior = productos.find((producto) => producto.codigo === codigoOriginal)
-    if (!anterior) errores.general = 'Producto no encontrado.'
-    if (Object.keys(errores).length) return { errores }
-
-    const datos = normalizarDatosProducto(valores)
-    const origen = datos.origen || 'No especificado'
-    const producto = {
-      ...anterior,
-      ...datos,
-      origen,
-      origenSimulado: origen === anterior.origen ? anterior.origenSimulado : true,
-      imagenReferencial: anterior.imagenReferencial ?? false,
-    }
-    modificarCatalogoLocalmente((actuales) => actuales.map((item) => item.codigo === codigoOriginal ? producto : item))
-    return { producto }
+    return guardarProducto(valores, codigoOriginal)
   }
 
-  async function agregarProducto(valores) {
-    const errores = validarProducto(valores, productos)
+  function agregarProducto(valores) {
+    return guardarProducto(valores)
+  }
+
+  async function guardarProducto(valores, codigoOriginal) {
+    const errores = validarProducto(valores, remoto ? productos : [], codigoOriginal)
     if (Object.keys(errores).length) return { errores }
-    if (!remoto) {
-      return { errores: { general: 'Para guardar el producto, recupera la conexión y vuelve a consultar el catálogo del servidor.' } }
-    }
+    if (!remoto) return { errores: { general: avisoSinCatalogoRemoto } }
+    const anterior = productos.find((producto) => producto.codigo === codigoOriginal)
+    if (codigoOriginal !== undefined && !anterior) return { errores: { general: avisoProductoInexistente } }
 
     try {
-      const producto = await crearProducto(normalizarDatosProducto(valores))
-      if (!esCatalogoValido([producto]) || !Number.isSafeInteger(producto.id)) {
+      const datos = normalizarDatosProducto(valores)
+      const producto = anterior ? await actualizarProductoRemoto(anterior.id, datos) : await crearProducto(datos)
+      if (!esCatalogoValido([producto]) || !tieneIdProducto(producto) || (anterior && producto.id !== anterior.id)) {
         return { errores: { general: 'La respuesta del servidor no contiene un producto válido. Consulta el catálogo antes de reintentar.' } }
       }
-      setCatalogo((actual) => ({
-        ...actual,
-        productos: [...actual.productos.filter((item) => item.codigo !== producto.codigo), producto],
-      }))
+      setProductosRemotos((actuales) => {
+        if (!anterior) {
+          return [...actuales.filter((item) => item.id !== producto.id && item.codigo !== producto.codigo), producto]
+        }
+        const vigentes = actuales.filter((item) => item.id === producto.id || item.codigo !== producto.codigo)
+        return vigentes.map((item) => item.id === producto.id ? producto : item)
+      })
       return { producto }
     } catch (error) {
+      if (error?.response?.status === 404 && anterior) return { errores: { general: avisoProductoInexistente } }
       const campo = error?.response?.status === 409 ? 'codigo' : 'general'
       return { errores: { [campo]: getErrorMessage(error, 'No se pudo guardar el producto') } }
     }
   }
 
-  function eliminarProducto(codigo) {
-    modificarCatalogoLocalmente((actuales) => actuales.filter((producto) => producto.codigo !== codigo))
+  async function eliminarProducto(codigo, idSeleccionado) {
+    if (!remoto) return { error: avisoSinCatalogoRemoto }
+    const producto = productos.find((item) => item.codigo === codigo)
+    if (!producto) return { error: avisoProductoInexistente }
+    if (producto.id !== idSeleccionado) return { error: 'El catálogo cambió. Cancela y vuelve a seleccionar el producto.' }
+
+    try {
+      await eliminarProductoRemoto(producto.id)
+      setProductosRemotos((actuales) => actuales.filter((item) => item.id !== producto.id))
+      return {}
+    } catch (error) {
+      return { error: error?.response?.status === 404 ? avisoProductoInexistente : getErrorMessage(error, 'No se pudo eliminar el producto') }
+    }
   }
 
   const [cargaUsuarios] = useState(cargarUsuarios)
@@ -374,14 +379,14 @@ function App() {
 
   return (
     <>
-      {consulta.cargando && <div className="alert alert-info m-3" aria-live="polite">Consultando el catálogo del servidor. Se muestran datos locales mientras carga.</div>}
+      {consulta.cargando && <div className="alert alert-info m-3" aria-live="polite">Consultando el catálogo del servidor. {mensajeFuente}</div>}
       {consulta.error && (
         <div className="alert alert-warning m-3 d-flex flex-wrap align-items-center gap-2" aria-live="polite">
-          <span>{consulta.error} Se muestran datos locales.</span>
+          <span>{consulta.error} {mensajeFuente}</span>
           <Button variant="outline-dark" size="sm" onClick={reintentarConsulta}>Reintentar consulta</Button>
         </div>
       )}
-      {aviso && (!remoto || cambiosLocales || aviso === avisoSinAlmacenamiento) && <Alert variant="warning" role="status" className="m-3">{aviso}</Alert>}
+      {!remoto && respaldo.aviso && <Alert variant="warning" role="status" className="m-3">{respaldo.aviso}</Alert>}
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
