@@ -1,22 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Card, Col, Form, Row, Tab, Tabs } from 'react-bootstrap'
 import { useLocation, useNavigate } from 'react-router-dom'
 import CampoFormulario from '../components/CampoFormulario'
-import { administradorDemo } from '../data/administradorDemo'
+import { iniciarSesion } from '../services/authService'
+import { getErrorMessage } from '../utils/getErrorMessage'
+import { crearSesion } from '../utils/sesion'
+import { normalizarCorreo } from '../utils/usuarios'
 import { validarCorreo, validarPassword } from '../utils/validaciones'
 
 const valoresIniciales = { correo: '', password: '' }
 
-function LoginView({ iniciarSesion }) {
+function LoginView({ alIniciarSesion }) {
   const navegar = useNavigate()
   const { state } = useLocation()
-  const [tipo, setTipo] = useState('cliente')
+  const volverAdmin = typeof state?.volverAdmin === 'string' && /^\/admin(?:\/[a-z0-9-]+)*\/?(?:[?#].*)?$/i.test(state.volverAdmin)
+    ? state.volverAdmin
+    : null
+  const [tipo, setTipo] = useState(volverAdmin ? 'administrador' : 'cliente')
   const [valores, setValores] = useState(valoresIniciales)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState('')
+  const [ingresando, setIngresando] = useState(false)
+  const solicitud = useRef(null)
+
+  useEffect(() => () => { solicitud.current?.abort() }, [])
 
   function cambiarTipo(nuevoTipo) {
-    if (!nuevoTipo || nuevoTipo === tipo) return
+    if (!nuevoTipo || nuevoTipo === tipo || solicitud.current) return
     setTipo(nuevoTipo)
     setValores(valoresIniciales)
     setErrores({})
@@ -30,27 +40,52 @@ function LoginView({ iniciarSesion }) {
     setMensaje('')
   }
 
-  function enviar(event) {
+  async function enviar(event) {
     event.preventDefault()
+    if (solicitud.current) return
     const nuevosErrores = { correo: validarCorreo(valores.correo), password: validarPassword(valores.password) }
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) {
       setMensaje('')
       return
     }
-    if (!iniciarSesion(tipo, valores)) {
-      setMensaje('Correo electrónico o contraseña incorrectos.')
-      return
+    const controlador = new AbortController()
+    solicitud.current = controlador
+    setIngresando(true)
+    setMensaje('')
+    try {
+      const respuesta = await iniciarSesion({ ...valores, correo: normalizarCorreo(valores.correo) }, controlador.signal)
+      if (controlador.signal.aborted) return
+      const nuevaSesion = crearSesion(respuesta)
+      if (!nuevaSesion) {
+        setMensaje('El servidor no devolvió una sesión válida.')
+        return
+      }
+      const administrador = nuevaSesion.usuario.rol === 'ADMINISTRADOR'
+      if (administrador !== (tipo === 'administrador')) {
+        setMensaje(`Esta cuenta debe iniciar sesión en la pestaña ${administrador ? 'Administrador' : 'Cliente'}.`)
+        return
+      }
+      alIniciarSesion(nuevaSesion)
+      const destinoCliente = state?.volverAlCarrito === true ? '/carrito' : '/'
+      navegar(administrador ? volverAdmin ?? '/admin' : destinoCliente, { replace: true })
+    } catch (error) {
+      if (!controlador.signal.aborted) {
+        setMensaje(error?.response?.status === 401
+          ? 'Correo electrónico o contraseña incorrectos.'
+          : getErrorMessage(error, 'No se pudo iniciar sesión', 'No se pudo contactar con el servidor para iniciar sesión.'))
+      }
+    } finally {
+      solicitud.current = null
+      if (!controlador.signal.aborted) setIngresando(false)
     }
-    const destinoCliente = state?.volverAlCarrito === true ? '/carrito' : '/'
-    navegar(tipo === 'administrador' ? '/admin' : destinoCliente, { replace: true })
   }
 
   const formulario = (
     <Form noValidate className="mt-4" onSubmit={enviar}>
       <CampoFormulario id="correoLogin" nombre="correo" etiqueta="Correo electrónico:" tipo="email" valor={valores.correo} onChange={cambiar} error={errores.correo} />
       <CampoFormulario id="passwordLogin" nombre="password" etiqueta="Contraseña:" tipo="password" valor={valores.password} onChange={cambiar} error={errores.password} />
-      <Button type="submit">Iniciar sesión</Button>
+      <Button type="submit" disabled={ingresando}>{ingresando ? 'Ingresando...' : 'Iniciar sesión'}</Button>
       {mensaje && <p className="text-danger mt-3 mb-0" role="alert">{mensaje}</p>}
     </Form>
   )
@@ -63,18 +98,11 @@ function LoginView({ iniciarSesion }) {
             <h1 className="h2 mb-3">Inicio de sesión</h1>
             <p>Ingresa tu correo electrónico y contraseña para acceder a HuertoHogar.</p>
             <Tabs id="tipoSesion" aria-label="Tipo de cuenta" activeKey={tipo} onSelect={cambiarTipo} transition={false}>
-              <Tab eventKey="cliente" title="Cliente">{tipo === 'cliente' && formulario}</Tab>
-              <Tab eventKey="administrador" title="Administrador">{tipo === 'administrador' && formulario}</Tab>
+              <Tab eventKey="cliente" title="Cliente" disabled={ingresando && tipo !== 'cliente'}>{tipo === 'cliente' && formulario}</Tab>
+              <Tab eventKey="administrador" title="Administrador" disabled={ingresando && tipo !== 'administrador'}>{tipo === 'administrador' && formulario}</Tab>
             </Tabs>
           </Card.Body>
         </Card>
-        {tipo === 'administrador' && (
-          <aside aria-labelledby="credencialesAdmin" className="bg-warning-subtle text-dark rounded-1 shadow-sm mt-3 p-3">
-            <h2 id="credencialesAdmin" className="h6 fw-bold mb-2">Credenciales</h2>
-            <p className="mb-1"><strong>Correo:</strong> <code>{administradorDemo.correo}</code></p>
-            <p className="mb-0"><strong>Contraseña:</strong> <code>{administradorDemo.password}</code></p>
-          </aside>
-        )}
       </Col>
     </Row>
   )

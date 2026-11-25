@@ -8,7 +8,8 @@ import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/pro
 import { usuariosIniciales } from './data/usuariosIniciales'
 import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
 import { ajustarCarrito, esCarritoValido, maximoComprable } from './utils/carrito'
-import { autenticar, cargarSesion, guardarSesion } from './utils/sesion'
+import { sesionVigente } from './utils/sesion'
+import { useSesion } from './hooks/useSesion'
 import CarritoView from './views/CarritoView'
 import PublicLayout from './layouts/PublicLayout'
 import AdminLayout from './layouts/AdminLayout'
@@ -32,6 +33,8 @@ import RegistroView from './views/RegistroView'
 const claveProductos = 'huertohogar-productos-v1'
 const avisoSinCatalogoRemoto = 'Recupera la conexión y vuelve a consultar el catálogo del servidor para modificar productos.'
 const avisoProductoInexistente = 'El producto ya no existe en el servidor.'
+const avisoSesionRechazada = 'El servidor rechazó tu sesión. Vuelve a iniciar sesión.'
+const avisoPermisos = 'Se requiere una sesión administrativa vigente para modificar productos.'
 
 function tieneIdProducto(producto) {
   return Number.isSafeInteger(producto.id) && producto.id > 0
@@ -121,6 +124,9 @@ function cargarCarrito() {
 function App() {
   const ubicacion = useLocation()
   const navegar = useNavigate()
+  const { sesion, establecerSesion, invalidarSesion, motivo, avisoAlmacenamiento } = useSesion()
+  const clienteSesion = sesion?.usuario.rol === 'CLIENTE' ? sesion.usuario : null
+  const nombreSesion = clienteSesion ? `Hola, ${clienteSesion.nombre}` : sesion ? 'Administrador' : ''
   const [respaldo] = useState(cargarCatalogo)
   const [productosRemotos, setProductosRemotos] = useState(null)
   const remoto = productosRemotos !== null
@@ -176,6 +182,7 @@ function App() {
   }
 
   async function guardarProducto(valores, codigoOriginal) {
+    if (sesion?.usuario.rol !== 'ADMINISTRADOR' || !sesionVigente(sesion)) return { errores: { general: avisoPermisos } }
     const errores = validarProducto(valores, remoto ? productos : [], codigoOriginal)
     if (Object.keys(errores).length) return { errores }
     if (!remoto) return { errores: { general: avisoSinCatalogoRemoto } }
@@ -184,7 +191,9 @@ function App() {
 
     try {
       const datos = normalizarDatosProducto(valores)
-      const producto = anterior ? await actualizarProductoRemoto(anterior.id, datos) : await crearProducto(datos)
+      const producto = anterior
+        ? await actualizarProductoRemoto(anterior.id, datos, sesion.accessToken)
+        : await crearProducto(datos, sesion.accessToken)
       if (!esCatalogoValido([producto]) || !tieneIdProducto(producto) || (anterior && producto.id !== anterior.id)) {
         return { errores: { general: 'La respuesta del servidor no contiene un producto válido. Consulta el catálogo antes de reintentar.' } }
       }
@@ -197,6 +206,7 @@ function App() {
       })
       return { producto }
     } catch (error) {
+      if (error?.response?.status === 401) invalidarSesion(sesion.accessToken, avisoSesionRechazada)
       if (error?.response?.status === 404 && anterior) return { errores: { general: avisoProductoInexistente } }
       const campo = error?.response?.status === 409 ? 'codigo' : 'general'
       return { errores: { [campo]: getErrorMessage(error, 'No se pudo guardar el producto') } }
@@ -204,16 +214,18 @@ function App() {
   }
 
   async function eliminarProducto(codigo, idSeleccionado) {
+    if (sesion?.usuario.rol !== 'ADMINISTRADOR' || !sesionVigente(sesion)) return { error: avisoPermisos }
     if (!remoto) return { error: avisoSinCatalogoRemoto }
     const producto = productos.find((item) => item.codigo === codigo)
     if (!producto) return { error: avisoProductoInexistente }
     if (producto.id !== idSeleccionado) return { error: 'El catálogo cambió. Cancela y vuelve a seleccionar el producto.' }
 
     try {
-      await eliminarProductoRemoto(producto.id)
+      await eliminarProductoRemoto(producto.id, sesion.accessToken)
       setProductosRemotos((actuales) => actuales.filter((item) => item.id !== producto.id))
       return {}
     } catch (error) {
+      if (error?.response?.status === 401) invalidarSesion(sesion.accessToken, avisoSesionRechazada)
       return { error: error?.response?.status === 404 ? avisoProductoInexistente : getErrorMessage(error, 'No se pudo eliminar el producto') }
     }
   }
@@ -221,23 +233,8 @@ function App() {
   const [cargaUsuarios] = useState(cargarUsuarios)
   const [usuarios, setUsuarios] = useState(cargaUsuarios.usuarios)
   const [avisoUsuarios, setAvisoUsuarios] = useState(cargaUsuarios.aviso)
-  const [sesion, setSesion] = useState(() => cargarSesion(cargaUsuarios.usuarios))
-  const clienteSesion = sesion?.tipo === 'cliente' ? usuarios.find((usuario) => usuario.id === sesion.id) : null
-  const nombreSesion = clienteSesion ? `Hola, ${clienteSesion.nombre}` : sesion?.tipo === 'administrador' ? 'Administrador' : ''
-
-  useEffect(() => {
-    guardarSesion(sesion)
-  }, [sesion])
-
-  function iniciarSesion(tipo, valores) {
-    const nuevaSesion = autenticar(tipo, valores, usuarios)
-    if (!nuevaSesion) return false
-    setSesion(nuevaSesion)
-    return true
-  }
-
   function cerrarSesion() {
-    setSesion(null)
+    establecerSesion(null)
     navegar('/', { replace: true })
   }
 
@@ -252,8 +249,8 @@ function App() {
     }
   }, [usuarios, cargaUsuarios.puedeGuardar])
 
-  function guardarUsuario(valores, { idOriginal, registroPublico = false } = {}) {
-    const errores = validarUsuario(valores, usuarios, { idOriginal, registroPublico })
+  function guardarUsuario(valores, idOriginal) {
+    const errores = validarUsuario(valores, usuarios, { idOriginal })
     const anterior = usuarios.find((usuario) => usuario.id === idOriginal)
     if (idOriginal !== undefined && !anterior) errores.general = 'Usuario no encontrado.'
     if (Object.keys(errores).length) return { errores }
@@ -264,7 +261,7 @@ function App() {
       apellido: valores.apellido.trim(),
       correo: normalizarCorreo(valores.correo),
       telefono: valores.telefono.trim(),
-      direccion: registroPublico ? '' : valores.direccion.trim(),
+      direccion: valores.direccion.trim(),
       password: anterior ? anterior.password : valores.password,
     }
     setUsuarios((actuales) => anterior
@@ -278,12 +275,11 @@ function App() {
   }
 
   function actualizarUsuario(idOriginal, valores) {
-    return guardarUsuario(valores, { idOriginal })
+    return guardarUsuario(valores, idOriginal)
   }
 
   function eliminarUsuario(id) {
     setUsuarios((actuales) => actuales.filter((usuario) => usuario.id !== id))
-    setSesion((actual) => actual?.tipo === 'cliente' && actual.id === id ? null : actual)
   }
 
   const [cargaCarrito] = useState(cargarCarrito)
@@ -355,7 +351,7 @@ function App() {
 
   function confirmarCompra() {
     if (carritoDisponible.length === 0 || !esCarritoValido(carritoDisponible)) return
-    if (!clienteSesion) {
+    if (!clienteSesion || !sesionVigente(sesion)) {
       navegar('/login', { state: { volverAlCarrito: true } })
       return
     }
@@ -387,6 +383,8 @@ function App() {
         </div>
       )}
       {!remoto && respaldo.aviso && <Alert variant="warning" role="status" className="m-3">{respaldo.aviso}</Alert>}
+      {motivo && <Alert variant="warning" role="status" className="m-3">{motivo}</Alert>}
+      {avisoAlmacenamiento && <Alert variant="warning" role="status" className="m-3">{avisoAlmacenamiento}</Alert>}
       {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
@@ -399,10 +397,10 @@ function App() {
           <Route path="blog" element={<BlogView />} />
           <Route path="blog/:slug" element={<DetalleBlogView />} />
           <Route path="contacto" element={<ContactoView />} />
-          <Route path="login" element={<LoginView iniciarSesion={iniciarSesion} />} />
-          <Route path="registro" element={<RegistroView registrarUsuario={(valores) => guardarUsuario(valores, { registroPublico: true })} />} />
+          <Route path="login" element={<LoginView alIniciarSesion={establecerSesion} />} />
+          <Route path="registro" element={<RegistroView />} />
         </Route>
-        <Route path="/admin" element={<AdminLayout nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
+        <Route path="/admin" element={<AdminLayout sesion={sesion} nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
           <Route index element={<AdminInicioView productos={productos} />} />
           <Route path="productos" element={<AdminProductosView productos={productos} eliminarProducto={eliminarProducto} />} />
           <Route path="productos/nuevo" element={<AdminNuevoProductoView agregarProducto={agregarProducto} />} />

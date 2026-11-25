@@ -120,4 +120,4 @@ Al cargar HuertoHogar en un navegador que aún no tiene datos de usuarios guarda
 
 Al cargar un listado válido del formato anterior, cada registro sin el campo `password` recibe `Temporal2`. Esto incluye las cuentas iniciales que el navegador ya había guardado sin contraseña. La migración conserva los demás campos y las contraseñas existentes. Una vez guardada, cada cuenta conserva su contraseña en las siguientes recargas.
 
-En `/login`, usa la pestaña Cliente para estas cuentas. La pestaña Administrador acepta `admin@huertohogar.cl` con `AdminDemo2` y abre `/admin`. La sesión de demostración guarda el tipo de cuenta y su identificador en `sessionStorage`, bajo `huertohogar-sesion-v1`. Las rutas administrativas conservan el acceso directo y el carrito sigue siendo compartido entre las sesiones del navegador en esta etapa.
+Estas instrucciones describen EP2. Desde EP3, el registro y el login utilizan Spring Boot, y `/admin` requiere una sesión JWT de administrador. Los registros locales pertenecen al CRUD provisional de usuarios. El carrito conserva su almacenamiento independiente entre sesiones del navegador.
