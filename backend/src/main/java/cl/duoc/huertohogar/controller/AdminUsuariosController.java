@@ -43,7 +43,6 @@ public class AdminUsuariosController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<UsuarioResponse> crear(@Valid @RequestBody UsuarioCrearRequest solicitud) {
         UsuarioResponse usuario = service.crear(solicitud);
         return ResponseEntity.created(URI.create("/api/usuarios/" + usuario.id())).body(usuario);
