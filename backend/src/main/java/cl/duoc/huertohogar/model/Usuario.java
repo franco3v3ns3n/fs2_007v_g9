@@ -55,13 +55,17 @@ public class Usuario {
         if (passwordHash == null || !HASH_BCRYPT.matcher(passwordHash).matches()) {
             throw new IllegalArgumentException("Se requiere un hash BCrypt válido.");
         }
+        actualizarDatos(nombre, apellido, correo, telefono, direccion);
+        this.passwordHash = passwordHash;
+        this.rol = Objects.requireNonNull(rol);
+    }
+
+    public void actualizarDatos(String nombre, String apellido, String correo, String telefono, String direccion) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.correo = normalizarCorreo(correo);
         this.telefono = telefono;
         this.direccion = direccion;
-        this.passwordHash = passwordHash;
-        this.rol = Objects.requireNonNull(rol);
     }
 
     public static String normalizarCorreo(String correo) {
