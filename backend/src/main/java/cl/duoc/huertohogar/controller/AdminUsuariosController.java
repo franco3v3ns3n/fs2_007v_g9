@@ -5,7 +5,6 @@ import cl.duoc.huertohogar.dto.UsuarioCrearRequest;
 import cl.duoc.huertohogar.dto.UsuarioResponse;
 import cl.duoc.huertohogar.service.UsuarioService;
 import jakarta.validation.Valid;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +22,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
-@ConditionalOnProperty(name = "huertohogar.admin-usuarios-habilitados", havingValue = "true")
 public class AdminUsuariosController {
 
     private final UsuarioService service;
