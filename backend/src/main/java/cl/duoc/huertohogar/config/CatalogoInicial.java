@@ -1,23 +1,46 @@
 package cl.duoc.huertohogar.config;
 
+import cl.duoc.huertohogar.model.InicializacionCatalogo;
 import cl.duoc.huertohogar.model.Producto;
 import cl.duoc.huertohogar.repository.ProductoRepository;
-import org.springframework.boot.CommandLineRunner;
+import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Component
-public class CatalogoInicial implements CommandLineRunner {
+@Profile("dev | prod")
+public class CatalogoInicial implements SmartInitializingSingleton {
+
+    private static final String CATALOGO_INICIAL = "catalogo-inicial";
 
     private final ProductoRepository repository;
+    private final EntityManager entityManager;
+    private final boolean produccion;
 
-    public CatalogoInicial(ProductoRepository repository) {
+    public CatalogoInicial(ProductoRepository repository, EntityManager entityManager, Environment environment) {
         this.repository = repository;
+        this.entityManager = entityManager;
+        this.produccion = environment.matchesProfiles("prod");
     }
 
     @Override
-    public void run(String... args) {
+    @Transactional
+    public void afterSingletonsInstantiated() {
+        if (produccion) {
+            if (entityManager.find(InicializacionCatalogo.class, CATALOGO_INICIAL) == null) {
+                if (repository.count() == 0) {
+                    repository.saveAll(productosIniciales());
+                }
+                entityManager.persist(new InicializacionCatalogo(CATALOGO_INICIAL));
+            }
+            return;
+        }
+
         for (Producto producto : productosIniciales()) {
             if (!repository.existsByCodigo(producto.getCodigo())) {
                 repository.save(producto);

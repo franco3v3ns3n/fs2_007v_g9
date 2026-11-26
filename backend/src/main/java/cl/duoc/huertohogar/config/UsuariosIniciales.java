@@ -4,10 +4,12 @@ import cl.duoc.huertohogar.model.RolUsuario;
 import cl.duoc.huertohogar.model.Usuario;
 import cl.duoc.huertohogar.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("dev & !prod")
 public class UsuariosIniciales implements CommandLineRunner {
 
     private final UsuarioRepository repository;
