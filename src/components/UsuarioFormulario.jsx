@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
 import CampoFormulario from './CampoFormulario'
@@ -16,6 +16,10 @@ function UsuarioFormulario({ usuario, onGuardar }) {
     ...(editar ? {} : { password: '' }),
   }))
   const [errores, setErrores] = useState({})
+  const [guardando, setGuardando] = useState(false)
+  const enviando = useRef(false)
+
+  useEffect(() => () => { enviando.current = false }, [])
 
   function cambiar(event) {
     const { name, value } = event.target
@@ -23,22 +27,33 @@ function UsuarioFormulario({ usuario, onGuardar }) {
     setErrores({ ...errores, [name]: '', general: '' })
   }
 
-  function enviar(event) {
+  async function enviar(event) {
     event.preventDefault()
-    const nuevosErrores = validarUsuario(valores, [], { idOriginal: usuario?.id })
-    if (Object.keys(nuevosErrores).length) {
-      setErrores(nuevosErrores)
-      return
+    if (enviando.current) return
+    const nuevosErrores = validarUsuario(valores, { editar })
+    setErrores(nuevosErrores)
+    if (Object.keys(nuevosErrores).length) return
+
+    enviando.current = true
+    setGuardando(true)
+    try {
+      const { usuario: guardado } = await onGuardar(valores)
+      if (!enviando.current) return
+      navigate('/admin/usuarios', {
+        replace: true,
+        state: { mensaje: `Registro de ${guardado.nombre} ${guardado.apellido} ${editar ? 'actualizado' : 'agregado'} correctamente.` },
+      })
+    } catch (error) {
+      if (enviando.current) {
+        const campo = error.status === 409 ? 'correo' : 'general'
+        setErrores({ [campo]: error.message })
+      }
+    } finally {
+      if (enviando.current) {
+        enviando.current = false
+        setGuardando(false)
+      }
     }
-    const resultado = onGuardar(valores)
-    if (resultado.errores) {
-      setErrores(resultado.errores)
-      return
-    }
-    navigate('/admin/usuarios', {
-      replace: true,
-      state: { mensaje: `Registro de ${resultado.usuario.nombre} ${resultado.usuario.apellido} ${editar ? 'actualizado' : 'agregado'} correctamente.` },
-    })
   }
 
   return (
@@ -48,8 +63,8 @@ function UsuarioFormulario({ usuario, onGuardar }) {
           <Card.Body className="p-4">
             <h1 className="h2 mb-3">{editar ? 'Editar usuario' : 'Nuevo usuario'}</h1>
             <p>{editar
-              ? 'Revisa los datos del usuario representativo del prototipo administrativo.'
-              : 'Completa los datos para representar un nuevo usuario en el prototipo administrativo.'}</p>
+              ? 'Actualiza los datos del cliente.'
+              : 'Completa los datos para crear una cuenta de cliente.'}</p>
             <Form noValidate className="mt-4" onSubmit={enviar}>
               <CampoFormulario id="nombreUsuario" nombre="nombre" etiqueta="Nombre:" valor={valores.nombre} onChange={cambiar} error={errores.nombre} />
               <CampoFormulario id="apellidoUsuario" nombre="apellido" etiqueta="Apellido:" valor={valores.apellido} onChange={cambiar} error={errores.apellido} />
@@ -59,11 +74,11 @@ function UsuarioFormulario({ usuario, onGuardar }) {
               {!editar && (
                 <>
                   <CampoFormulario id="passwordUsuario" nombre="password" etiqueta="Contraseña:" tipo="password" valor={valores.password} onChange={cambiar} error={errores.password} />
-                  <p className="small text-body-secondary">Usa una contraseña ficticia de 4 a 10 caracteres.</p>
+                  <p className="small text-body-secondary">Usa una contraseña de 4 a 10 caracteres.</p>
                 </>
               )}
               {errores.general && <Alert variant="danger" role="alert">{errores.general}</Alert>}
-              <Button type="submit">{editar ? 'Guardar cambios' : 'Guardar usuario'}</Button>
+              <Button type="submit" disabled={guardando}>{guardando ? 'Guardando...' : editar ? 'Guardar cambios' : 'Guardar usuario'}</Button>
             </Form>
             <p className="mt-4"><Button as={Link} role="link" to="/admin/usuarios" variant="outline-secondary">Volver a Usuarios</Button></p>
           </Card.Body>

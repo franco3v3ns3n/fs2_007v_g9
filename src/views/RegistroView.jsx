@@ -24,7 +24,7 @@ function RegistroView() {
   async function enviar(event) {
     event.preventDefault()
     if (enviando.current) return
-    const nuevosErrores = validarUsuario(valores, [], { registroPublico: true })
+    const nuevosErrores = validarUsuario(valores, { registroPublico: true })
     setErrores(nuevosErrores)
     setMensaje('')
     if (Object.keys(nuevosErrores).length) return

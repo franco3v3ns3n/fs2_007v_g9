@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useState } from 'react'
 import { Alert, Button } from 'react-bootstrap'
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { productosIniciales } from './data/productosIniciales'
 import { actualizarProducto as actualizarProductoRemoto, crearProducto, eliminarProducto as eliminarProductoRemoto, listarProductos } from './services/productoService'
 import { getErrorMessage } from './utils/getErrorMessage'
 import { esCatalogoValido, normalizarCodigo, validarProducto } from './utils/productos'
-import { usuariosIniciales } from './data/usuariosIniciales'
-import { esConjuntoUsuariosValido, generarIdUsuario, normalizarCorreo, validarUsuario } from './utils/usuarios'
 import { ajustarCarrito, esCarritoValido, maximoComprable } from './utils/carrito'
 import { sesionVigente } from './utils/sesion'
 import { useSesion } from './hooks/useSesion'
@@ -72,34 +70,6 @@ function cargarCatalogo() {
   }
 }
 
-const claveUsuarios = 'huertohogar-usuarios-v1'
-const passwordTemporalUsuarios = 'Temporal2'
-const avisoSinAlmacenamientoUsuarios = 'El almacenamiento local de usuarios no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
-
-function cargarUsuarios() {
-  const iniciales = usuariosIniciales.map((usuario) => ({ ...usuario }))
-  try {
-    const guardado = localStorage.getItem(claveUsuarios)
-    if (guardado === null) return { usuarios: iniciales, puedeGuardar: true, aviso: '' }
-    const usuarios = JSON.parse(guardado)
-    if (esConjuntoUsuariosValido(usuarios)) {
-      const usuariosMigrados = usuarios.map((usuario) => Object.hasOwn(usuario, 'password')
-        ? usuario
-        : { ...usuario, password: passwordTemporalUsuarios })
-      return { usuarios: usuariosMigrados, puedeGuardar: true, aviso: '' }
-    }
-  } catch (error) {
-    if (!(error instanceof SyntaxError)) {
-      return { usuarios: iniciales, puedeGuardar: false, aviso: avisoSinAlmacenamientoUsuarios }
-    }
-  }
-  return {
-    usuarios: iniciales,
-    puedeGuardar: false,
-    aviso: 'Los datos guardados de usuarios no son válidos. Se muestran los registros iniciales sin sobrescribirlos. Los cambios de esta sesión no se conservarán después de recargar.',
-  }
-}
-
 const claveCarrito = 'huertohogar-carrito-v1'
 const avisoSinAlmacenamientoCarrito = 'El almacenamiento local del carrito no está disponible. Los cambios de esta sesión no podrán conservarse después de recargar.'
 
@@ -127,6 +97,28 @@ function App() {
   const { sesion, establecerSesion, invalidarSesion, motivo, avisoAlmacenamiento } = useSesion()
   const clienteSesion = sesion?.usuario.rol === 'CLIENTE' ? sesion.usuario : null
   const nombreSesion = clienteSesion ? `Hola, ${clienteSesion.nombre}` : sesion ? 'Administrador' : ''
+  const ejecutarUsuario = useCallback(async (operacion) => {
+    if (sesion?.usuario.rol !== 'ADMINISTRADOR' || !sesionVigente(sesion)) {
+      throw new Error('Se requiere una sesión administrativa vigente para gestionar usuarios.')
+    }
+    try {
+      return await operacion(sesion.accessToken)
+    } catch (error) {
+      if (!error?.isAxiosError) throw error
+      const status = error.response?.status
+      if (status === 401) invalidarSesion(sesion.accessToken, avisoSesionRechazada)
+      const mensaje = getErrorMessage(error, 'No se pudo completar la operación de usuarios', 'No se pudo conectar con el servidor de usuarios.')
+      throw Object.assign(new Error(mensaje), { status })
+    }
+  }, [sesion, invalidarSesion])
+
+  useEffect(() => {
+    try {
+      localStorage.removeItem('huertohogar-usuarios-v1')
+    } catch {
+      // La aplicación ya no consulta el almacenamiento heredado de usuarios.
+    }
+  }, [])
   const [respaldo] = useState(cargarCatalogo)
   const [productosRemotos, setProductosRemotos] = useState(null)
   const remoto = productosRemotos !== null
@@ -230,56 +222,11 @@ function App() {
     }
   }
 
-  const [cargaUsuarios] = useState(cargarUsuarios)
-  const [usuarios, setUsuarios] = useState(cargaUsuarios.usuarios)
-  const [avisoUsuarios, setAvisoUsuarios] = useState(cargaUsuarios.aviso)
   function cerrarSesion() {
-    establecerSesion(null)
-    navegar('/', { replace: true })
-  }
-
-  useEffect(() => {
-    if (!cargaUsuarios.puedeGuardar) return
-    try {
-      const serializado = JSON.stringify(usuarios)
-      if (localStorage.getItem(claveUsuarios) !== serializado) localStorage.setItem(claveUsuarios, serializado)
-      setAvisoUsuarios('')
-    } catch {
-      setAvisoUsuarios(avisoSinAlmacenamientoUsuarios)
-    }
-  }, [usuarios, cargaUsuarios.puedeGuardar])
-
-  function guardarUsuario(valores, idOriginal) {
-    const errores = validarUsuario(valores, usuarios, { idOriginal })
-    const anterior = usuarios.find((usuario) => usuario.id === idOriginal)
-    if (idOriginal !== undefined && !anterior) errores.general = 'Usuario no encontrado.'
-    if (Object.keys(errores).length) return { errores }
-
-    const usuario = {
-      id: anterior?.id ?? generarIdUsuario(usuarios),
-      nombre: valores.nombre.trim(),
-      apellido: valores.apellido.trim(),
-      correo: normalizarCorreo(valores.correo),
-      telefono: valores.telefono.trim(),
-      direccion: valores.direccion.trim(),
-      password: anterior ? anterior.password : valores.password,
-    }
-    setUsuarios((actuales) => anterior
-      ? actuales.map((item) => item.id === idOriginal ? usuario : item)
-      : [...actuales, usuario])
-    return { usuario }
-  }
-
-  function agregarUsuario(valores) {
-    return guardarUsuario(valores)
-  }
-
-  function actualizarUsuario(idOriginal, valores) {
-    return guardarUsuario(valores, idOriginal)
-  }
-
-  function eliminarUsuario(id) {
-    setUsuarios((actuales) => actuales.filter((usuario) => usuario.id !== id))
+    startTransition(() => {
+      establecerSesion(null)
+      navegar('/', { replace: true })
+    })
   }
 
   const [cargaCarrito] = useState(cargarCarrito)
@@ -385,7 +332,6 @@ function App() {
       {!remoto && respaldo.aviso && <Alert variant="warning" role="status" className="m-3">{respaldo.aviso}</Alert>}
       {motivo && <Alert variant="warning" role="status" className="m-3">{motivo}</Alert>}
       {avisoAlmacenamiento && <Alert variant="warning" role="status" className="m-3">{avisoAlmacenamiento}</Alert>}
-      {avisoUsuarios && <Alert variant="warning" role="status" className="m-3">{avisoUsuarios}</Alert>}
       {avisoCarrito && <Alert variant="warning" role="status" className="m-3">{avisoCarrito}</Alert>}
       <Routes>
         <Route path="/" element={<PublicLayout cantidadCarrito={cantidadCarrito} mensajeCarrito={mensajeCarrito} nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />}>
@@ -405,9 +351,9 @@ function App() {
           <Route path="productos" element={<AdminProductosView productos={productos} eliminarProducto={eliminarProducto} />} />
           <Route path="productos/nuevo" element={<AdminNuevoProductoView agregarProducto={agregarProducto} />} />
           <Route path="productos/:codigo/editar" element={<AdminEditarProductoView key={remoto ? 'servidor' : 'local'} productos={productos} actualizarProducto={actualizarProducto} />} />
-          <Route path="usuarios" element={<AdminUsuariosView usuarios={usuarios} eliminarUsuario={eliminarUsuario} />} />
-          <Route path="usuarios/nuevo" element={<AdminNuevoUsuarioView agregarUsuario={agregarUsuario} />} />
-          <Route path="usuarios/:id/editar" element={<AdminEditarUsuarioView usuarios={usuarios} actualizarUsuario={actualizarUsuario} />} />
+          <Route path="usuarios" element={<AdminUsuariosView ejecutarUsuario={ejecutarUsuario} />} />
+          <Route path="usuarios/nuevo" element={<AdminNuevoUsuarioView ejecutarUsuario={ejecutarUsuario} />} />
+          <Route path="usuarios/:id/editar" element={<AdminEditarUsuarioView ejecutarUsuario={ejecutarUsuario} />} />
         </Route>
       </Routes>
     </>
