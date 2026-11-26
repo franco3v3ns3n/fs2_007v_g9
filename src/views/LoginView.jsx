@@ -6,7 +6,7 @@ import { iniciarSesion } from '../services/authService'
 import { getErrorMessage } from '../utils/getErrorMessage'
 import { crearSesion } from '../utils/sesion'
 import { normalizarCorreo } from '../utils/usuarios'
-import { validarCorreo, validarPassword } from '../utils/validaciones'
+import { validarCorreo } from '../utils/validaciones'
 
 const valoresIniciales = { correo: '', password: '' }
 
@@ -43,7 +43,7 @@ function LoginView({ alIniciarSesion }) {
   async function enviar(event) {
     event.preventDefault()
     if (solicitud.current) return
-    const nuevosErrores = { correo: validarCorreo(valores.correo), password: validarPassword(valores.password) }
+    const nuevosErrores = { correo: validarCorreo(valores.correo), password: valores.password === '' ? 'Ingresa tu contraseña.' : '' }
     setErrores(nuevosErrores)
     if (Object.values(nuevosErrores).some(Boolean)) {
       setMensaje('')
