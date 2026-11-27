@@ -102,3 +102,123 @@ escribir en ese directorio. H2 agrega el sufijo `.mv.db` al archivo. Mantén
 la base, los secretos, la configuración privada y los logs fuera de Git.
 Para esta etapa se usa `spring.jpa.hibernate.ddl-auto=update`.
 En producción real, la evolución del esquema requiere migraciones versionadas.
+
+## Despliegue del backend en EC2 con systemd
+
+### Preparar la instancia y el JAR
+
+Confirma en EC2 la instancia y la huella SSH antes de usarla. Una vez
+conectado, revisa `/etc/os-release`, `uname -m`, `free -h`, `df -h` y
+`sudo ss -ltnp`. Comprueba que 8080 esté libre e inspecciona las rutas
+de la tabla siguiente y cualquier instalación anterior. Si hay un JAR,
+servicio o base previa, preserva sus datos y usa el procedimiento de
+actualización de esta sección.
+
+En Ubuntu 24.04, comprueba `/usr/bin/java -version`. Si falta Java 21,
+instala el runtime con `sudo apt-get update` y
+`sudo apt-get install --no-install-recommends openjdk-21-jre-headless`.
+La unidad incluye un heap máximo de 512 MiB. Revisa la memoria disponible
+antes de instalarla. Maven se ejecuta en el equipo local.
+
+Desde `backend/` en PowerShell, configura el secreto temporal de desarrollo
+como se indica arriba y ejecuta lo siguiente con JDK 21. Detén el
+procedimiento si falla alguno de los comandos.
+
+```powershell
+git rev-parse HEAD
+java -version
+mvn clean test
+mvn clean package
+Get-FileHash -Algorithm SHA256 target/huertohogar-api-0.0.1-SNAPSHOT.jar
+```
+
+Transfiere el JAR ejecutable y la unidad por SCP a una carpeta nueva en el
+hogar del usuario SSH. Este ejemplo usa un alias SSH confirmado llamado
+`ec2` con su identidad configurada.
+
+```powershell
+ssh -o StrictHostKeyChecking=yes ec2 'umask 077 && mkdir ~/huertohogar-stage'
+scp -o StrictHostKeyChecking=yes target/huertohogar-api-0.0.1-SNAPSHOT.jar deploy/huertohogar-api.service ec2:~/huertohogar-stage/
+ssh -o StrictHostKeyChecking=yes ec2 'sha256sum ~/huertohogar-stage/huertohogar-api-0.0.1-SNAPSHOT.jar'
+```
+
+Compara el SHA-256 remoto con el local antes de instalar. Registra el
+commit y el hash de cada despliegue.
+
+### Instalar y configurar
+
+| Ruta en EC2 | Propósito y permisos |
+| --- | --- |
+| `/opt/huertohogar/backend/app.jar` | JAR instalado por root, legible por el servicio. |
+| `/var/lib/huertohogar/` | Datos H2 persistentes, propiedad de `huertohogar`, modo `0750`. |
+| `/etc/huertohogar/backend.env` | Configuración privada de systemd, propiedad de `root:root`, modo `0600`. Directorio con modo `0700`. |
+| `/etc/systemd/system/huertohogar-api.service` | Unidad instalada desde `deploy/huertohogar-api.service`. |
+
+Para una instalación nueva, si la cuenta dedicada y los destinos aún no
+existen, ejecuta desde el directorio remoto que contiene las transferencias.
+
+```bash
+sudo useradd --system --user-group --home-dir /var/lib/huertohogar \
+  --shell /usr/sbin/nologin huertohogar
+sudo install -d -m 0755 /opt/huertohogar/backend
+sudo install -d -m 0750 -o huertohogar -g huertohogar /var/lib/huertohogar
+sudo install -d -m 0700 /etc/huertohogar
+sudo install -m 0644 huertohogar-api-0.0.1-SNAPSHOT.jar /opt/huertohogar/backend/app.jar
+sudo install -m 0644 huertohogar-api.service /etc/systemd/system/huertohogar-api.service
+sudo install -m 0600 /dev/null /etc/huertohogar/backend.env
+```
+
+En una sesión SSH privada, edita `backend.env` con `sudoedit`. Establece
+`SPRING_PROFILES_ACTIVE=prod` y
+`HUERTOHOGAR_DB_URL=jdbc:h2:file:/var/lib/huertohogar/huertohogar`. Para una
+instalación nueva, genera `HUERTOHOGAR_JWT_SECRET` con 32 bytes aleatorios
+en Base64 y consérvalo en el archivo. Puedes usar
+`sudo sh -c '{ printf "HUERTOHOGAR_JWT_SECRET="; openssl rand -base64 32; } >> /etc/huertohogar/backend.env'`
+una sola vez sin mostrar el valor. Configura `HUERTOHOGAR_ADMIN_CORREO` y añade
+`HUERTOHOGAR_ADMIN_PASSWORD` para el primer arranque, usando una contraseña
+aleatoria compatible con los límites de BCrypt descritos arriba. Tras confirmar
+el primer login, retira solo la línea de la contraseña inicial y reinicia el
+servicio. Conserva el correo, el secreto JWT y la URL de H2.
+
+### Operar y comprobar el servicio
+
+```bash
+sudo systemd-analyze verify /etc/systemd/system/huertohogar-api.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now huertohogar-api
+sudo systemctl is-active huertohogar-api
+sudo systemctl is-enabled huertohogar-api
+sudo systemctl status huertohogar-api --no-pager
+sudo journalctl -u huertohogar-api -n 80 --no-pager
+sudo ss -ltnp 'sport = :8080'
+curl -fsS http://127.0.0.1:8080/api/productos
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/api/usuarios
+```
+
+Comprueba el perfil `prod` en el journal, el archivo
+`/var/lib/huertohogar/huertohogar.mv.db`, la escucha exclusiva en
+`127.0.0.1:8080` y la respuesta `401` de la ruta administrativa. Usa
+`sudo systemctl start huertohogar-api`, `sudo systemctl stop huertohogar-api`
+y `sudo systemctl restart huertohogar-api` para administrar el proceso.
+
+Para verificar desde un cliente local, abre el túnel
+`ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:8081:127.0.0.1:8080 ec2`.
+Usa `http://127.0.0.1:8081` como base y mantén los tokens y contraseñas fuera
+del historial y de los informes. Comprueba GET de catálogo y por ID, login
+del administrador, `403` del cliente en una operación administrativa y CRUD
+con un producto y cliente temporales. Edita el producto temporal, reinicia
+el servicio, consulta ambos IDs y comprueba el cambio y el login original.
+Elimina el producto temporal, reinicia otra vez y confirma `404`. Retira
+también el cliente temporal al terminar.
+
+### Actualizar el JAR
+
+Compila y verifica el nuevo JAR en el equipo local y compara su hash tras
+transferirlo. Conserva el JAR anterior para revertir. Si el cambio puede
+afectar el esquema, detén el servicio antes de hacer una copia en frío de
+H2 y mantenla con permisos restringidos. Instala el nuevo JAR en un archivo
+auxiliar dentro de `/opt/huertohogar/backend/` y renómbralo a `app.jar`
+en ese mismo directorio. Arranca o reinicia el servicio y repite las
+comprobaciones de estado y HTTP. Conserva el archivo de entorno, el secreto
+JWT y la base existente. Si falla, revisa el journal antes de revertir y
+confirma la compatibilidad del esquema con el JAR anterior.
