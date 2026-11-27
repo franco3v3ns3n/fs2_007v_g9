@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card, Col, Form, Row } from 'react-bootstrap'
 import { Link, useNavigate } from 'react-router-dom'
 import CampoFormulario from './CampoFormulario'
 import { categoriasProducto } from '../utils/productos'
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 function ProductoFormulario({ producto, onGuardar }) {
   const editar = Boolean(producto)
@@ -19,6 +20,10 @@ function ProductoFormulario({ producto, onGuardar }) {
     origen: producto?.origen ?? '',
   }))
   const [errores, setErrores] = useState({})
+  const [guardando, setGuardando] = useState(false)
+  const envioActual = useRef(null)
+
+  useEffect(() => () => { envioActual.current = null }, [])
 
   function cambiar(event) {
     const { name, value } = event.target
@@ -26,17 +31,32 @@ function ProductoFormulario({ producto, onGuardar }) {
     setErrores({ ...errores, [name]: '', general: '' })
   }
 
-  function enviar(event) {
+  async function enviar(event) {
     event.preventDefault()
-    const resultado = onGuardar(valores)
-    if (resultado.errores) {
-      setErrores(resultado.errores)
-      return
+    if (envioActual.current) return
+    const envio = {}
+    envioActual.current = envio
+    setGuardando(true)
+    setErrores({})
+    try {
+      const resultado = await onGuardar(valores)
+      if (envioActual.current !== envio) return
+      if (resultado.errores) {
+        setErrores(resultado.errores)
+        return
+      }
+      navigate('/admin/productos', {
+        replace: true,
+        state: { mensaje: `Producto ${resultado.producto.codigo} ${editar ? 'actualizado' : 'agregado'} correctamente al catálogo.` },
+      })
+    } catch (error) {
+      if (envioActual.current === envio) setErrores({ general: getErrorMessage(error, 'No se pudo guardar el producto') })
+    } finally {
+      if (envioActual.current === envio) {
+        envioActual.current = null
+        setGuardando(false)
+      }
     }
-    navigate('/admin/productos', {
-      replace: true,
-      state: { mensaje: `Producto ${resultado.producto.codigo} ${editar ? 'actualizado' : 'agregado'} correctamente al catálogo.` },
-    })
   }
 
   return (
@@ -60,8 +80,8 @@ function ProductoFormulario({ producto, onGuardar }) {
                 </Form.Select>
                 <small id="error-categoriaProducto" className="text-danger d-block mt-1">{errores.categoria}</small>
               </Form.Group>
-              <CampoFormulario id="precioProducto" nombre="precio" etiqueta="Precio:" tipo="number" valor={valores.precio} onChange={cambiar} error={errores.precio} />
-              <CampoFormulario id="stockProducto" nombre="stock" etiqueta="Stock:" tipo="number" valor={valores.stock} onChange={cambiar} error={errores.stock} />
+              <CampoFormulario id="precioProducto" nombre="precio" etiqueta="Precio:" tipo="number" min={1} step={1} valor={valores.precio} onChange={cambiar} error={errores.precio} />
+              <CampoFormulario id="stockProducto" nombre="stock" etiqueta="Stock:" tipo="number" min={0} step={1} valor={valores.stock} onChange={cambiar} error={errores.stock} />
               <CampoFormulario id="descripcionProducto" nombre="descripcion" etiqueta="Descripción:" filas={3} valor={valores.descripcion} onChange={cambiar} error={errores.descripcion} />
               <fieldset className="mt-4">
                 <legend className="h5">Información complementaria</legend>
@@ -74,7 +94,7 @@ function ProductoFormulario({ producto, onGuardar }) {
                 </Form.Group>
               </fieldset>
               {errores.general && <Alert variant="danger" role="alert">{errores.general}</Alert>}
-              <Button type="submit">{editar ? 'Guardar cambios' : 'Guardar producto'}</Button>
+              <Button type="submit" disabled={guardando}>{guardando ? 'Guardando...' : editar ? 'Guardar cambios' : 'Guardar producto'}</Button>
             </Form>
             <p className="mt-4"><Button as={Link} role="link" to="/admin/productos" variant="outline-secondary">Volver a Productos</Button></p>
           </Card.Body>

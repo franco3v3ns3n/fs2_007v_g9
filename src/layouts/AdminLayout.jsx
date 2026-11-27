@@ -1,9 +1,13 @@
 import { Container } from 'react-bootstrap'
-import { Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import NavbarAdmin from '../components/NavbarAdmin'
 import FooterAdmin from '../components/FooterAdmin'
 
-function AdminLayout({ nombreSesion, cerrarSesion }) {
+function AdminLayout({ sesion, nombreSesion, cerrarSesion }) {
+  const { pathname, search, hash } = useLocation()
+  if (!sesion) return <Navigate to="/login" replace state={{ volverAdmin: pathname + search + hash }} />
+  if (sesion.usuario.rol !== 'ADMINISTRADOR') return <Navigate to="/" replace />
+
   return (
     <div className="admin-page d-flex flex-column min-vh-100">
       <NavbarAdmin nombreSesion={nombreSesion} cerrarSesion={cerrarSesion} />

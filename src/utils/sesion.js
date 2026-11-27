@@ -1,45 +1,65 @@
-import { administradorDemo } from '../data/administradorDemo'
-import { normalizarCorreo } from './usuarios'
+const claveSesion = 'huertohogar-sesion-jwt-v1'
+const claveAnterior = 'huertohogar-sesion-v1'
 
-const claveSesion = 'huertohogar-sesion-v1'
+export const sesionVencida = 'Tu sesión venció. Vuelve a iniciar sesión.'
 
-export function autenticar(tipo, valores, usuarios) {
-  const correo = normalizarCorreo(valores.correo)
-  if (tipo === 'administrador') {
-    return correo === administradorDemo.correo && valores.password === administradorDemo.password
-      ? { tipo, id: administradorDemo.correo }
-      : null
-  }
-  if (tipo !== 'cliente') return null
-
-  const usuario = usuarios.find((item) => normalizarCorreo(item.correo) === correo && item.password === valores.password)
-  return usuario ? { tipo, id: usuario.id } : null
+function leerSegmento(segmento) {
+  return JSON.parse(atob(segmento.replace(/-/g, '+').replace(/_/g, '/')))
 }
 
-export function cargarSesion(usuarios) {
-  try {
-    const sesion = JSON.parse(sessionStorage.getItem(claveSesion))
-    if (!sesion || typeof sesion !== 'object' || Object.keys(sesion).length !== 2) return null
+function leerVigencia(token, usuario) {
+  if (typeof token !== 'string' || !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token)) return 0
+  if (!Number.isSafeInteger(usuario?.id) || usuario.id <= 0 || typeof usuario.nombre !== 'string' || !usuario.nombre.trim()) return 0
+  if (usuario.rol !== 'CLIENTE' && usuario.rol !== 'ADMINISTRADOR') return 0
 
-    const { tipo, id } = sesion
-    if (tipo === 'administrador' && id === administradorDemo.correo) return { tipo, id }
-    if (tipo === 'cliente' && usuarios.some((usuario) => usuario.id === id)) return { tipo, id }
+  try {
+    const [cabecera, payload, firma] = token.split('.')
+    if (leerSegmento(cabecera).alg !== 'HS256' || firma.length !== 43) return 0
+    const { sub, rol, iss, exp } = leerSegmento(payload)
+    // Estas comprobaciones son de interfaz. Spring Security verifica la firma y los permisos.
+    if (iss === 'huertohogar-api' && sub === String(usuario.id) && rol === usuario.rol && Number.isSafeInteger(exp)) {
+      return exp * 1000
+    }
   } catch {
-    // Una sesión ilegible o un almacenamiento bloqueado dejan la aplicación como visitante.
+    // Un token ilegible no representa una sesión.
   }
-  return null
+  return 0
+}
+
+export function sesionVigente(sesion) {
+  return Boolean(sesion && Number.isSafeInteger(sesion.expiraEn) && sesion.expiraEn > Date.now())
+}
+
+export function crearSesion(respuesta) {
+  const { accessToken, tokenType, expiresIn, usuario } = respuesta ?? {}
+  if (tokenType !== 'Bearer' || !Number.isSafeInteger(expiresIn) || expiresIn <= 0) return null
+  const expiraEn = Math.min(Date.now() + expiresIn * 1000, leerVigencia(accessToken, usuario))
+  return prepararSesion(accessToken, usuario, expiraEn)
+}
+
+function prepararSesion(accessToken, usuario, expiraEn) {
+  if (!sesionVigente({ expiraEn })) return null
+  const { id, nombre, rol } = usuario
+  return { accessToken, usuario: { id, nombre, rol }, expiraEn }
+}
+
+export function cargarSesion() {
+  try {
+    const guardada = JSON.parse(sessionStorage.getItem(claveSesion))
+    if (!sesionVigente(guardada) || guardada.expiraEn > leerVigencia(guardada.accessToken, guardada.usuario)) return null
+    return prepararSesion(guardada.accessToken, guardada.usuario, guardada.expiraEn)
+  } catch {
+    return null
+  }
 }
 
 export function guardarSesion(sesion) {
   try {
-    const guardado = sessionStorage.getItem(claveSesion)
-    if (sesion) {
-      const serializado = JSON.stringify({ tipo: sesion.tipo, id: sesion.id })
-      if (guardado !== serializado) sessionStorage.setItem(claveSesion, serializado)
-    } else if (guardado !== null) {
-      sessionStorage.removeItem(claveSesion)
-    }
+    if (sesion) sessionStorage.setItem(claveSesion, JSON.stringify(sesion))
+    else sessionStorage.removeItem(claveSesion)
+    sessionStorage.removeItem(claveAnterior)
+    return true
   } catch {
-    // La sesión activa sigue disponible en memoria si falla el almacenamiento.
+    return false
   }
 }

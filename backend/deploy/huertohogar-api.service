@@ -1,0 +1,23 @@
+[Unit]
+Description=HuertoHogar API
+After=network.target
+StartLimitIntervalSec=120
+StartLimitBurst=4
+
+[Service]
+User=huertohogar
+Group=huertohogar
+WorkingDirectory=/opt/huertohogar/backend
+EnvironmentFile=/etc/huertohogar/backend.env
+ExecStart=/usr/bin/java -Xms128m -Xmx512m -jar /opt/huertohogar/backend/app.jar --server.address=127.0.0.1 --server.port=8080
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/huertohogar
+
+[Install]
+WantedBy=multi-user.target

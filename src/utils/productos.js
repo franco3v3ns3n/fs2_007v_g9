@@ -9,6 +9,19 @@ export function normalizarCodigo(codigo) {
   return codigo.trim().toUpperCase()
 }
 
+function leerNumero(valor) {
+  if (typeof valor === 'number') return valor
+  return typeof valor === 'string' && valor.trim() !== '' ? Number(valor) : NaN
+}
+
+function esPrecioValido(precio) {
+  return Number.isSafeInteger(precio) && precio > 0
+}
+
+function esStockValido(stock) {
+  return Number.isSafeInteger(stock) && stock >= 0
+}
+
 export function validarProducto(valores, productos, codigoOriginal) {
   const codigo = normalizarCodigo(valores.codigo)
   const errores = {}
@@ -19,11 +32,11 @@ export function validarProducto(valores, productos, codigoOriginal) {
   }
   if (!valores.nombre.trim()) errores.nombre = 'Ingresa el nombre del producto.'
   if (!categoriasProducto.includes(valores.categoria)) errores.categoria = 'Selecciona una categoría.'
-  if (String(valores.precio).trim() === '' || !Number.isFinite(Number(valores.precio)) || Number(valores.precio) <= 0) {
-    errores.precio = 'Ingresa un precio válido mayor que 0.'
+  if (!esPrecioValido(leerNumero(valores.precio))) {
+    errores.precio = 'Ingresa un precio entero mayor que 0.'
   }
-  if (String(valores.stock).trim() === '' || !Number.isFinite(Number(valores.stock)) || Number(valores.stock) < 0) {
-    errores.stock = 'Ingresa un stock válido igual o mayor que 0.'
+  if (!esStockValido(leerNumero(valores.stock))) {
+    errores.stock = 'Ingresa un stock entero igual o mayor que 0.'
   }
   if (!valores.descripcion.trim()) errores.descripcion = 'Ingresa la descripción del producto.'
   if (!valores.unidadPrecio.trim()) errores.unidadPrecio = 'Ingresa la unidad de precio.'
@@ -40,8 +53,7 @@ export function esCatalogoValido(productos) {
     if (!textos.every((campo) => typeof producto[campo] === 'string' && producto[campo].trim() !== '')) return false
     if (!/^[A-Z0-9-]+$/.test(producto.codigo) || codigos.has(producto.codigo)) return false
     if (!categoriasProducto.includes(producto.categoria)) return false
-    if (typeof producto.precio !== 'number' || !Number.isFinite(producto.precio) || producto.precio <= 0) return false
-    if (typeof producto.stock !== 'number' || !Number.isFinite(producto.stock) || producto.stock < 0) return false
+    if (!esPrecioValido(producto.precio) || !esStockValido(producto.stock)) return false
     if (typeof producto.origenSimulado !== 'boolean') return false
     if (producto.imagenReferencial !== undefined && typeof producto.imagenReferencial !== 'boolean') return false
     codigos.add(producto.codigo)
